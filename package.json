@@ -1,0 +1,61 @@
+{
+  "name": "simplemark",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The beautiful living document for AI-generated Markdown: always rendered, always your file.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check:boundaries": "depcruise src tests --config .dependency-cruiser.cjs",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 5273 --strictPort",
+    "test:ui": "playwright test",
+    "demo": "node scripts/record-demo.mjs",
+    "showcase:tanoa": "node scripts/record-tanoa-showcase.mjs",
+    "showcase:tanoa:atlas": "node scripts/record-tanoa-storm-atlas.mjs",
+    "icons:generate": "bash scripts/generate-alternate-icons.sh",
+    "tauri": "tauri",
+    "dev:native": "tauri dev",
+    "build:native": "tauri build",
+    "test:native": "cargo test --manifest-path src-tauri/Cargo.toml"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@tauri-apps/cli": "^2.11.4",
+    "@types/dompurify": "^3.0.5",
+    "@types/node": "^22.20.1",
+    "dependency-cruiser": "^16.10.4",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  },
+  "dependencies": {
+    "@hpcc-js/wasm-graphviz": "^1.28.0",
+    "@milkdown/kit": "^7.21.3",
+    "@tauri-apps/api": "^2.11.1",
+    "@tauri-apps/plugin-clipboard-manager": "^2.3.2",
+    "@types/d3-dsv": "^3.0.7",
+    "d3-dsv": "^3.0.1",
+    "dompurify": "^3.4.12",
+    "katex": "^0.18.1",
+    "lowlight": "^3.3.0",
+    "mdast-util-from-markdown": "^2.0.3",
+    "mdast-util-to-markdown": "^2.1.2",
+    "mermaid": "^11.16.0",
+    "micromark-util-chunked": "^2.0.1",
+    "micromark-util-classify-character": "^2.0.1",
+    "micromark-util-resolve-all": "^2.0.1",
+    "micromark-util-symbol": "^2.0.1",
+    "micromark-util-types": "^2.0.2",
+    "remark-math": "^6.0.0",
+    "vega": "^6.3.1",
+    "vega-interpreter": "^2.3.1",
+    "vega-lite": "^6.4.3"
+  }
+}

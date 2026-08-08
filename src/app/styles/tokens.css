@@ -1,0 +1,198 @@
+/*
+ * Design tokens, extracted verbatim from docs/wireframe.html.
+ *
+ * The wireframe is the approved visual specification (ADR-0001 §Browser
+ * development shell). These values are copied, not reinterpreted, so a screenshot
+ * of the running app can be compared against it directly.
+ *
+ * The palette is warm paper and restrained amber — familiar without impersonating
+ * Bear or Apple Notes. Agent presence gets a separate violet channel so scope and
+ * attribution stay recognisable without recolouring the document (DESIGN.md
+ * §10.4). Those agent tokens are defined here because they are part of the
+ * approved system; nothing in EDITOR-1 consumes them yet.
+ */
+
+:root {
+  color-scheme: light;
+  --canvas: #ebeae7;
+  --paper: #fffefa;
+  --chrome: #f7f6f2;
+  --ink: #242321;
+  --ink-2: #696660;
+  --ink-3: #a19d95;
+  --line: #e8e5df;
+  --soft: #f3f1ec;
+  --accent: #d08a32;
+  --accent-soft: #fff1d9;
+  --agent: #7356c9;
+  --agent-soft: #f0ebff;
+  --agent-line: #d9cdfb;
+  --danger: #c75a4a;
+  --success: #51805e;
+  --sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  --serif: 'Iowan Old Style', 'New York', Palatino, Georgia, serif;
+  --mono: 'SFMono-Regular', Consolas, monospace;
+  --shadow: 0 24px 75px rgba(42, 39, 33, 0.17), 0 2px 9px rgba(42, 39, 33, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --canvas: #171716;
+    --paper: #222220;
+    --chrome: #1d1d1b;
+    --ink: #efede7;
+    --ink-2: #aaa69e;
+    --ink-3: #77736d;
+    --line: #393733;
+    --soft: #2b2a27;
+    --accent: #eca950;
+    --accent-soft: #48361f;
+    --agent: #b7a4f4;
+    --agent-soft: #332c4d;
+    --agent-line: #5d4f86;
+    --danger: #ef8c7d;
+    --success: #83b18e;
+    --shadow: 0 26px 80px rgba(0, 0, 0, 0.48);
+  }
+}
+
+/*
+ * Reader themes (D6, §10.4). Safari Reader's model: the background is a choice,
+ * not a consequence of the system appearance.
+ *
+ * `data-reader-theme` on the root wins over the `prefers-color-scheme` block
+ * above, because an explicit choice must beat an inferred one. `white` is the
+ * default; `tan` is the warm alternative, matched to Safari Reader's sepia.
+ *
+ * The earlier tan was `#fffefa` — a white with a rumour of warmth in it, close
+ * enough to the white theme that switching looked like nothing had happened.
+ * A theme has to be visibly the thing it is named after, so this is Safari
+ * Reader's actual sepia paper, with the surrounding tones moved with it: a warm
+ * page inside a cold frame reads as a rendering fault rather than a choice.
+ */
+:root[data-reader-theme='tan'] {
+  color-scheme: light;
+  --canvas: #e3dcc9;
+  --paper: #f8f1e0;
+  --chrome: #f2ebd8;
+  --ink: #33302a;
+  --ink-2: #6b6558;
+  --ink-3: #9d9585;
+  --line: #e5dcc6;
+  --soft: #efe7d3;
+  --accent: #c07a25;
+  --accent-soft: #f6e7c8;
+  --agent: #7356c9;
+  --agent-soft: #ece6fb;
+  --agent-line: #d5c8f7;
+  --danger: #bd5340;
+  --success: #4a7a56;
+  --shadow: 0 24px 75px rgba(64, 54, 34, 0.18), 0 2px 9px rgba(64, 54, 34, 0.09);
+}
+
+/* Plain white: maximum contrast, no warmth. */
+:root[data-reader-theme='white'] {
+  color-scheme: light;
+  --canvas: #e6e6e6;
+  --paper: #ffffff;
+  --chrome: #f7f7f7;
+  --ink: #1a1a1a;
+  --ink-2: #5f5f5f;
+  --ink-3: #9a9a9a;
+  --line: #e6e6e6;
+  --soft: #f2f2f2;
+  --accent: #b4762a;
+  --accent-soft: #fdf1de;
+  --agent: #6a4ec2;
+  --agent-soft: #efeaff;
+  --agent-line: #d6c9fa;
+  --danger: #c14a38;
+  --success: #43734f;
+  --shadow: 0 24px 75px rgba(0, 0, 0, 0.14), 0 2px 9px rgba(0, 0, 0, 0.07);
+}
+
+/* Night: true black paper, not the dim-grey dark scheme. */
+:root[data-reader-theme='night'] {
+  color-scheme: dark;
+  --canvas: #000000;
+  --paper: #0d0d0d;
+  --chrome: #141414;
+  --ink: #ececec;
+  --ink-2: #a6a6a6;
+  --ink-3: #6f6f6f;
+  --line: #2a2a2a;
+  --soft: #1a1a1a;
+  --accent: #eca950;
+  --accent-soft: #3d2d18;
+  --agent: #b7a4f4;
+  --agent-soft: #2b2544;
+  --agent-line: #52457a;
+  --danger: #ef8c7d;
+  --success: #83b18e;
+  --shadow: 0 26px 80px rgba(0, 0, 0, 0.7);
+}
+
+/*
+ * Reader layout variables (D6, EDITOR-3). One value each for scale, face,
+ * column width, leading, block rhythm, and first-line indent — applied at the
+ * root so a preference always means the whole document and never a selection.
+ * Defaults reproduce the approved wireframe exactly.
+ */
+:root {
+  --reader-scale: 1;
+  --reader-body: var(--serif);
+  --reader-width: 680px;
+  --reader-leading: 1.68;
+  --reader-para-space: 21px;
+  --reader-indent: 0;
+}
+
+/*
+ * Code token colours (EDITOR-7). One variable per token family, defined per
+ * reader background, so highlighted fences follow White/Tan/Night exactly like
+ * prose does. Hues are borrowed from Atom's One Light / One Dark and kept
+ * slightly muted — code should read as part of the page, not a billboard.
+ */
+:root {
+  --code-keyword: #a626a4;
+  --code-string: #50a14f;
+  --code-number: #986801;
+  --code-function: #4078f2;
+  --code-type: #c18401;
+  --code-variable: #e45649;
+  --code-meta: #0184bc;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --code-keyword: #c678dd;
+    --code-string: #98c379;
+    --code-number: #d19a66;
+    --code-function: #61afef;
+    --code-type: #e5c07b;
+    --code-variable: #e06c75;
+    --code-meta: #56b6c2;
+  }
+}
+
+:root[data-reader-theme='white'],
+:root[data-reader-theme='tan'] {
+  --code-keyword: #a626a4;
+  --code-string: #50a14f;
+  --code-number: #986801;
+  --code-function: #4078f2;
+  --code-type: #c18401;
+  --code-variable: #e45649;
+  --code-meta: #0184bc;
+}
+
+:root[data-reader-theme='night'] {
+  --code-keyword: #c678dd;
+  --code-string: #98c379;
+  --code-number: #d19a66;
+  --code-function: #61afef;
+  --code-type: #e5c07b;
+  --code-variable: #e06c75;
+  --code-meta: #56b6c2;
+}

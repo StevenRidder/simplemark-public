@@ -1,0 +1,80 @@
+{
+  "schema": "simplemark.project-tanoa.v1",
+  "fictional": true,
+  "geography": {
+    "name": "Fulaga",
+    "region": "Lau Group, Fiji",
+    "osmRelation": 3521053,
+    "osmUrl": "https://www.openstreetmap.org/relation/3521053",
+    "attribution": "Map data © OpenStreetMap contributors · ODbL 1.0"
+  },
+  "clock": {
+    "decisionMinutes": 14
+  },
+  "battery": {
+    "capacityKwh": 360,
+    "isolationSoc": 0.84,
+    "approvedReserveFloor": 0.42,
+    "staleReserveFloor": 0.35
+  },
+  "load": {
+    "commissioningKw": 13.5,
+    "priorityKw": 11,
+    "flexibleKw": 2.5,
+    "priorityCircuits": [
+      "clinic",
+      "communications",
+      "water"
+    ]
+  },
+  "autonomy": {
+    "requiredHours": 13,
+    "safeBeforeHours": 11.2,
+    "falseControllerHours": 13.1,
+    "acceptedHours": 13.7,
+    "gapHours": 1.8
+  },
+  "final": {
+    "frequencyHz": 50,
+    "reservePct": 78,
+    "priorityCircuitsHolding": 3
+  },
+  "forecast": [
+    {
+      "hour": 0,
+      "generationKw": 4.8,
+      "commissioningReservePct": 84,
+      "acceptedReservePct": 84
+    },
+    {
+      "hour": 3,
+      "generationKw": 3.6,
+      "commissioningReservePct": 72.8,
+      "acceptedReservePct": 74.8
+    },
+    {
+      "hour": 6,
+      "generationKw": 2.2,
+      "commissioningReservePct": 61.5,
+      "acceptedReservePct": 65.7
+    },
+    {
+      "hour": 9,
+      "generationKw": 0.9,
+      "commissioningReservePct": 50.3,
+      "acceptedReservePct": 56.5
+    },
+    {
+      "hour": 11.2,
+      "generationKw": 0.3,
+      "commissioningReservePct": 42,
+      "acceptedReservePct": 49.8
+    },
+    {
+      "hour": 13,
+      "generationKw": 0.1,
+      "commissioningReservePct": 35.3,
+      "acceptedReservePct": 44.3
+    }
+  ]
+}

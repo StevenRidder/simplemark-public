@@ -1,0 +1,42 @@
+# macOS filesystem cruft
+.DS_Store
+._*
+**/._*
+
+# Node / build output. `node_modules` carries no trailing slash on purpose: a
+# trailing slash matches directories only, and a task worktree normally links
+# `node_modules` at the shared checkout's copy rather than paying for a second
+# `npm ci`. With `node_modules/`, `git add -A` committed that symlink as a
+# regular file; CI then recreated it at checkout, `npm ci` replaced it with a
+# real directory, and the dirty tree failed the gate several steps later.
+node_modules
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Tauri build output. Same trailing-slash rule as node_modules: `target` is the
+# other path a worktree links at a shared copy, to avoid re-running a full
+# Rust build per task.
+src-tauri/target
+
+# Test and CI receipts
+.artifacts/
+coverage/
+test-results/
+playwright-report/
+
+# Local secrets and runner state
+.env
+.env.local
+.switchboard/
+
+# Agent worktrees. The fleet creates a per-task git worktree inside the shared
+# checkout, so the repo root can hold many working copies of itself. They are
+# checkouts, not source: a single `git add -A` would otherwise commit the whole
+# fleet's in-flight work. No trailing slash, so a container linked at a scratch
+# disk is ignored too.
+.worktrees
+**/.claude/worktrees
+
+# Claude Code local overrides (.claude/settings.json IS tracked)
+.claude/settings.local.json

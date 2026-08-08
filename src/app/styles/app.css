@@ -1,0 +1,4011 @@
+/*
+ * Window chrome, canvas, and rendered-block styling, extracted from
+ * docs/wireframe.html.
+ *
+ * Scope note: only the calm state is here. The agent card, presence faces,
+ * passage conversation, and redirect/stop chrome are part of the approved
+ * wireframe but belong to the live-agent deliverable; EDITOR-1's acceptance
+ * requires unsupported controls to be absent or visibly disabled, never faked.
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  /* Workspace preferences override these on the grid itself. They must still
+     exist for a first launch, before a user has ever resized either column. */
+  --library-column-width: 190px;
+  --notes-column-width: 285px;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  overflow: auto;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+/* Controls a later task delivers stay visible but inert, so the shell never
+   advertises behaviour it does not have. */
+button[disabled] {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.stage {
+  height: 100%;
+  padding: 22px;
+  display: grid;
+  place-items: center;
+}
+
+.window {
+  /* A three-pane workspace needs enough room for the document to remain a
+     document. At large sizes this follows Notes/Bear and lets the canvas take
+     the space instead of preserving decorative outer margins. */
+  width: min(1440px, 100%);
+  height: min(800px, calc(100vh - 44px));
+  min-height: 620px;
+  background: var(--paper);
+  border: 1px solid rgba(70, 65, 57, 0.14);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.titlebar {
+  height: 50px;
+  flex: 0 0 50px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--chrome) 84%, transparent);
+  backdrop-filter: blur(18px);
+  position: relative;
+  z-index: 10;
+}
+
+.left,
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.right {
+  justify-content: flex-end;
+}
+
+.join {
+  min-height: 30px;
+  border: 0;
+  border-radius: 8px;
+  padding: 0 11px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.tool {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-2);
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+}
+
+.tool:hover:not([disabled]) {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.tool svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.filename {
+  flex: 1 1 auto;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+  margin-left: 10px;
+  min-width: 135px;
+}
+
+.filename-title {
+  overflow: hidden;
+  max-width: 260px;
+  border: 0;
+  border-radius: 4px;
+  padding: 1px 3px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filename-title:not(:disabled) {
+  cursor: text;
+}
+
+.filename-title:not(:disabled):hover,
+.filename-title:not(:disabled):focus-visible {
+  background: color-mix(in srgb, var(--soft) 82%, transparent);
+  outline: none;
+}
+
+.filename-input,
+.note-rename {
+  border: 1px solid color-mix(in srgb, var(--accent) 62%, var(--line));
+  border-radius: 5px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+}
+
+.filename-input {
+  box-sizing: border-box;
+  width: min(260px, 100%);
+  padding: 1px 3px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.filename small {
+  display: block;
+  font-size: 9px;
+  font-weight: 450;
+  color: var(--ink-3);
+  margin-top: 2px;
+}
+
+.format-popover {
+  display: none;
+  position: absolute;
+  z-index: 20;
+  width: 236px;
+  padding: 7px;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  box-shadow: 0 14px 42px rgba(32, 29, 24, 0.18);
+  backdrop-filter: blur(18px);
+}
+
+.format-popover.open {
+  display: block;
+}
+
+/* EDITOR-6 — an optional quiet strip for the few actions used while writing.
+   It is deliberately a shell control, never a rich-text representation. */
+.styles-bar {
+  position: absolute;
+  /* The nested Callout/Todo menus extend beyond the palette. Keep the entire
+     palette stack above the editor hit layer so a visible submenu can never
+     be intercepted by the document underneath it. */
+  z-index: 60;
+  left: 50%;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  width: 436px;
+  padding: 1px 5px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 68%, var(--ink-3));
+  box-shadow: 0 10px 30px rgb(40 35 29 / 16%);
+  backdrop-filter: blur(18px);
+  transform: translateX(-50%);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.styles-drag-handle {
+  display: grid;
+  place-items: center;
+  flex: 0 0 17px;
+  width: 17px;
+  height: 29px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  color: var(--ink-3);
+  background: transparent;
+  cursor: grab;
+  opacity: 0.62;
+}
+
+.styles-drag-handle:hover {
+  color: var(--ink-2);
+  background: color-mix(in srgb, var(--paper) 58%, transparent);
+  opacity: 1;
+}
+
+.styles-drag-handle svg {
+  width: 15px;
+  height: 15px;
+  fill: currentColor;
+  stroke: none;
+}
+
+.styles-bar.is-dragging .styles-drag-handle {
+  cursor: grabbing;
+}
+
+.styles-bar.is-placed {
+  left: var(--styles-bar-x);
+  top: var(--styles-bar-y);
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
+
+.styles-bar.is-dragging {
+  cursor: grabbing;
+  box-shadow: 0 14px 36px rgb(40 35 29 / 22%);
+}
+
+.styles-bar.menus-below .styles-menu {
+  top: calc(100% + 5px);
+  bottom: auto;
+}
+
+.styles-bar.menus-below .styles-reader-settings .format-popover {
+  top: calc(100% + 5px);
+  bottom: auto;
+}
+
+.styles-bar[hidden] {
+  display: none;
+}
+
+.styles-menu-group {
+  position: relative;
+}
+
+.styles-reader-settings .format-popover {
+  top: auto;
+  bottom: calc(100% + 5px);
+  left: 0;
+}
+
+.styles-control {
+  display: grid;
+  place-items: center;
+  min-width: 31px;
+  width: 31px;
+  height: 29px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13px;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.styles-reader-settings-trigger {
+  font: 500 16px/1 var(--serif);
+  letter-spacing: -0.4px;
+}
+
+.styles-control svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.styles-control svg circle {
+  fill: currentColor;
+  stroke: none;
+}
+
+.styles-letter {
+  font: 600 17px/1 var(--sans);
+  letter-spacing: -0.25px;
+}
+
+.styles-control .styles-disclosure {
+  width: 9px;
+  height: 9px;
+  color: var(--ink-3);
+  stroke-width: 1.4;
+  transform: translateY(0.25px);
+}
+
+.styles-control .styles-glyph-todo {
+  width: 18px;
+  height: 18px;
+  transform: translateX(-8px);
+}
+
+.styles-control .styles-glyph-list {
+  width: 20px;
+  height: 20px;
+}
+
+.styles-glyph-list circle {
+  fill: var(--danger) !important;
+}
+
+.styles-control .styles-glyph-highlight,
+.styles-control .styles-glyph-asset {
+  width: 19px;
+  height: 19px;
+}
+
+.styles-control .styles-glyph-link {
+  width: 18px;
+  height: 18px;
+  transform: translateX(4px);
+}
+
+.styles-control .styles-glyph-table {
+  width: 18px;
+  height: 18px;
+  transform: translateX(7px);
+}
+
+.styles-control .styles-glyph-more {
+  width: 17px;
+  height: 17px;
+  transform: translateX(11px);
+}
+
+.styles-control .styles-glyph-todo {
+  stroke-width: 1.8;
+}
+
+.styles-control .styles-glyph-table {
+  stroke-width: 1.7;
+}
+
+.styles-control .styles-glyph-asset {
+  stroke-width: 1.65;
+  transform: translateX(9px);
+}
+
+.styles-control .styles-glyph-highlight {
+  stroke-width: 1.6;
+}
+
+.styles-glyph-highlight .styles-highlight-wash {
+  stroke: var(--danger);
+  stroke-width: 3.2;
+  opacity: 0.22;
+}
+
+.styles-glyph-highlight .styles-highlight-swatch {
+  stroke: var(--danger);
+  stroke-width: 2.2;
+}
+
+.styles-menu-trigger {
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 3px;
+}
+
+/* Bear gives compound controls enough horizontal air for both the glyph and
+   its disclosure chevron. Keeping More at the ordinary control width is what
+   makes the palette feel balanced instead of uniformly padded. */
+.styles-menu-wide > .styles-menu-trigger {
+  min-width: 39px;
+  width: 39px;
+}
+
+.styles-menu-headers > .styles-menu-trigger > .styles-letter {
+  transform: translateX(7px);
+}
+
+.styles-menu-headers > .styles-menu-trigger {
+  gap: 0;
+}
+
+.styles-menu-headers > .styles-menu-trigger > .styles-disclosure {
+  margin-left: -2px;
+  transform: translate(7px, 0.25px);
+}
+
+.styles-menu-lists > .styles-menu-trigger > * {
+  transform: translateX(3px);
+}
+
+.styles-menu-lists > .styles-menu-trigger > .styles-disclosure {
+  margin-left: -3px;
+  transform: translate(3px, 0.25px);
+}
+
+.styles-menu-lists {
+  margin-right: 10px;
+}
+
+.styles-menu-highlight {
+  margin-right: 11px;
+}
+
+/* Bear's symbols are not mathematically centred inside equal hit targets.
+   These optical offsets preserve 31px controls while matching the observed
+   glyph rhythm: compact at the left, then slightly more air toward More. */
+.styles-menu-highlight > .styles-menu-trigger > .styles-glyph-highlight {
+  transform: translateX(9px);
+}
+
+.styles-menu-highlight > .styles-menu-trigger > .styles-disclosure {
+  transform: translate(9px, 0.25px);
+}
+
+.styles-strong svg {
+  stroke-width: 2.4;
+}
+
+.styles-emphasis em {
+  font: italic 18px/1 var(--serif);
+  transform: translateX(1px);
+}
+
+.styles-control:hover:not([disabled]),
+.styles-menu-trigger[aria-expanded='true'],
+.styles-reader-settings-trigger.active {
+  color: var(--ink);
+  background: color-mix(in srgb, var(--soft) 84%, transparent);
+}
+
+.styles-menu {
+  display: none;
+  position: absolute;
+  z-index: 25;
+  top: auto;
+  bottom: calc(100% + 5px);
+  left: 0;
+  min-width: 176px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--paper) 97%, transparent);
+  box-shadow: 0 12px 34px rgba(32, 29, 24, 0.16);
+  backdrop-filter: blur(16px);
+}
+
+.styles-menu.open {
+  display: grid;
+  gap: 0;
+}
+
+.styles-menu .styles-control,
+.styles-nested-menu .styles-control {
+  width: 100%;
+  min-width: 164px;
+  min-height: 27px;
+  height: 27px;
+  display: block;
+  padding: 0 8px;
+  border-radius: 5px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.styles-menu-unavailable {
+  color: var(--ink-2);
+  opacity: 0.62 !important;
+}
+
+.styles-menu-separator {
+  width: calc(100% - 4px);
+  height: 1px;
+  margin: 5px 2px;
+  border: 0;
+  background: var(--line);
+}
+
+.styles-nested-group {
+  position: relative;
+}
+
+.styles-nested-trigger {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.styles-nested-menu {
+  display: none;
+  position: absolute;
+  z-index: 27;
+  left: calc(100% + 5px);
+  top: -6px;
+  min-width: 176px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 97%, transparent);
+  box-shadow: 0 12px 34px rgba(32, 29, 24, 0.16);
+  backdrop-filter: blur(16px);
+}
+
+.styles-nested-group:hover > .styles-nested-menu,
+.styles-nested-group:focus-within > .styles-nested-menu {
+  display: grid;
+}
+
+.styles-overflow-menu-item {
+  display: none !important;
+}
+
+.styles-bar-menu-toggle {
+  width: 100%;
+  margin-top: 6px;
+  padding: 7px 8px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-2);
+  text-align: left;
+  font-size: 11px;
+}
+
+.styles-bar-menu-toggle:hover {
+  background: var(--soft);
+}
+
+.styles-bar-reveal {
+  position: absolute;
+  z-index: 60;
+  left: 50%;
+  bottom: 18px;
+  min-height: 31px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  box-shadow: 0 8px 24px rgb(40 35 29 / 12%);
+  color: var(--ink-2);
+  font: 500 11px/1 var(--sans);
+  transform: translateX(-50%);
+}
+
+.styles-bar-reveal:hover {
+  color: var(--ink);
+  background: var(--paper);
+}
+
+.styles-bar-reveal[hidden] {
+  display: none;
+}
+
+.style-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+}
+
+.heading-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3px;
+}
+
+.heading-row button,
+.style-row button,
+.inline-row button {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  text-align: left;
+  padding: 7px 8px;
+  font-size: 11px;
+}
+
+.style-row button:hover:not([disabled]),
+.heading-row button:hover:not([disabled]),
+.inline-row button:hover:not([disabled]) {
+  background: var(--soft);
+}
+
+.style-row .selected {
+  background: var(--accent-soft);
+  color: #8b5b1f;
+}
+
+.inline-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.heading-row + .style-row {
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.move-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 3px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.move-row button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 7px 8px;
+  color: var(--ink-2);
+  font-size: 11px;
+}
+
+.move-row button:hover:not([disabled]) {
+  background: var(--soft);
+}
+
+.inline-row button {
+  text-align: center;
+  font: 600 12px var(--sans);
+}
+
+/* Reader typography controls (D6). Document-level only — there is deliberately
+   no per-selection font, size, or colour, because Markdown cannot express it. */
+.family-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.family-row button {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  padding: 6px 2px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.family-row button:hover {
+  background: var(--soft);
+}
+
+.family-row button.selected {
+  background: var(--accent-soft);
+  color: #8b5b1f;
+}
+
+.theme-row {
+  display: flex;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 8px;
+}
+
+.swatch {
+  width: 30px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1.5px solid var(--line);
+}
+
+.swatch-white {
+  background: #ffffff;
+}
+.swatch-tan {
+  background: #fffefa;
+  box-shadow: inset 0 0 0 6px #f0ece1;
+}
+.swatch-night {
+  background: #0d0d0d;
+}
+
+.swatch.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.size-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+  margin-top: 6px;
+  padding-top: 8px;
+}
+
+.size-row button {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  color: var(--ink-2);
+  padding: 3px 9px;
+  line-height: 1;
+}
+
+.size-row button:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.size-smaller {
+  font-size: 12px;
+}
+.size-larger {
+  font-size: 19px;
+}
+
+.app-icon-settings {
+  border-top: 1px solid var(--line);
+  margin-top: 8px;
+  padding-top: 8px;
+}
+
+.app-icon-settings h2 {
+  margin: 0 0 7px 3px;
+  color: var(--ink-3);
+  font: 600 10px/1 var(--sans);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.app-icon-choices {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.app-icon-choice {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+  overflow: visible;
+  border: 1px solid transparent;
+  border-radius: 13px;
+  padding: 3px;
+  background: transparent;
+}
+
+.app-icon-choice:hover:not(:disabled) {
+  background: var(--soft);
+}
+
+.app-icon-choice img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 10px;
+}
+
+.app-icon-choice.selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.app-icon-check {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  display: none;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--accent);
+  color: white;
+  font: 700 10px/1 var(--sans);
+}
+
+.app-icon-choice.selected .app-icon-check {
+  display: grid;
+}
+
+/* Layout preference rows (EDITOR-3): width, leading, spacing, indent. Each is
+   a quiet segmented control — a label and two or three named steps. */
+.pref-row {
+  display: grid;
+  grid-template-columns: 58px 1fr;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid var(--line);
+  margin-top: 6px;
+  padding-top: 6px;
+}
+
+.pref-row > span {
+  font: 500 10px var(--sans);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-left: 4px;
+}
+
+.pref-row .steps {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 3px;
+}
+
+.pref-row .steps button {
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  padding: 5px 2px;
+  font-size: 11px;
+  color: var(--ink-2);
+}
+
+.pref-row .steps button:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.pref-row .steps button.selected {
+  background: var(--accent-soft);
+  color: #8b5b1f;
+}
+
+.status {
+  /* Save messages have different lengths. Keep their slot stable so changing
+     from Saved to Unsaved changes never nudges the formatting controls. */
+  flex: 0 0 118px;
+  inline-size: 118px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  font-size: 10.5px;
+  white-space: nowrap;
+  color: var(--success);
+}
+
+.status::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  margin-right: 5px;
+  vertical-align: 1px;
+}
+
+.status[data-state='dirty'] {
+  color: var(--ink-3);
+}
+
+/* Failures are visible and local (DESIGN.md §9.1). A failed write must look
+   different from a successful one at a glance. */
+.status[data-state='error'] {
+  color: var(--danger);
+  /* A refusal is only useful if its reason is readable, and the fixed width
+     above clipped every one of them to roughly its first fifteen characters.
+     That width exists so save wording never nudges the formatting controls;
+     error wording is rare and transient, so it may take the room it needs. */
+  flex: 0 0 auto;
+  inline-size: auto;
+  max-inline-size: 46ch;
+}
+
+/* section.editor, not .editor: Milkdown also puts an `editor` class on the
+   ProseMirror div itself, and an unscoped rule made that div a clipping scroll
+   container — which silently swallowed the fold gutter's hit-testing. */
+section.editor {
+  order: 1;
+  flex: 1;
+  overflow: auto;
+  position: relative;
+  /* The formatting palette floats over this scroller. Keep caret and
+     block-focused scrolling above its hit area so the last table, diagram,
+     or paragraph remains directly manipulable instead of sitting under the
+     palette. */
+  scroll-padding-bottom: 76px;
+  /* The persistent document indicator beside this scroller supplies a stable,
+     proportional length/position cue even when macOS hides overlay bars. */
+  scrollbar-width: none;
+}
+
+section.editor::-webkit-scrollbar {
+  display: none;
+}
+
+/* SHELL-1 — the shared Notes-style workspace. The browser and native shells
+   host this same navigation surface; only native window chrome belongs to macOS. */
+.workspace-body {
+  min-height: 0;
+  flex: 1;
+  display: grid;
+  grid-template-columns: var(--library-column-width) var(--notes-column-width) minmax(0, 1fr);
+  background: var(--paper);
+}
+
+.workspace-folders {
+  position: relative;
+  min-width: 0;
+  padding: 0 10px 54px;
+  border-right: 1px solid var(--line);
+  background: #343632;
+  color: #f4f2eb;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  font-optical-sizing: auto;
+}
+
+.workspace-library-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 58px;
+  padding: 0 4px;
+}
+
+.column-resizer {
+  position: absolute;
+  z-index: 12;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 7px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+}
+
+.column-resizer::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  background: transparent;
+}
+
+.column-resizer:hover::after,
+.column-resizer.dragging::after {
+  background: color-mix(in srgb, var(--accent) 62%, var(--line));
+}
+
+.workspace-name {
+  min-width: 0;
+  margin-right: auto;
+  overflow: hidden;
+  color: #f4f2eb;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-action,
+.workspace-library-footer button {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #b9bbb5;
+}
+
+.library-action svg,
+.workspace-library-footer svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.library-action:not(:disabled):hover,
+.workspace-library-footer button:not(:disabled):hover {
+  background: rgb(255 255 255 / 10%);
+  color: #fff;
+}
+
+.workspace-library-footer {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+/* The update strip (docs/UPDATE-NOTIFICATION.md §2).
+   `order: -1` with a full-width basis puts it on its own line above the two
+   icons without restructuring the footer, and it takes up no room at all while
+   hidden — the resting state, and the common one. */
+/* Specificity has to beat `.workspace-library-footer button`, which sizes the
+   two icons as 30px circles and would otherwise crush the strip into one. */
+.workspace-library-footer .library-update {
+  order: -1;
+  flex: 1 0 100%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 7px;
+  background: rgb(151 196 89 / 14%);
+  color: #c0dd97;
+  font: 500 11.5px/1.2 var(--sans);
+  text-align: left;
+}
+
+.workspace-library-footer .library-update[hidden] {
+  display: none;
+}
+
+.workspace-library-footer .library-update:not(:disabled):hover {
+  background: rgb(151 196 89 / 24%);
+  color: #eaf3de;
+}
+
+/* A failed check is muted and inert: it must carry the same weight as a
+   footnote, never the weight of an available update. */
+.workspace-library-footer .library-update[data-state='unknown'] {
+  background: rgb(255 255 255 / 7%);
+  color: #b4b2a9;
+  cursor: default;
+}
+
+.workspace-library-footer .library-update svg {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.library-rows {
+  display: grid;
+  gap: 1px;
+}
+
+.library-section-head {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  min-height: 39px;
+  padding: 12px 8px 5px 10px;
+}
+
+.library-section-label {
+  color: #aeb0aa;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.065em;
+  text-transform: uppercase;
+}
+
+.library-section-action {
+  display: grid;
+  place-items: center;
+  width: 27px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #aeb0aa;
+}
+
+.library-section-action:not(:disabled):hover {
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+}
+
+.library-section-action svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.folder-row {
+  display: grid;
+  grid-template-columns: 19px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  min-height: 32px;
+  padding: 6px 9px;
+  background: transparent;
+  color: #d0d2cc;
+  text-align: left;
+  font: 450 15.5px/1.25 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  letter-spacing: -0.005em;
+}
+
+.folder-row > span:nth-child(2) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.library-icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: #aeb0aa;
+}
+
+.library-icon svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.folder-row.selected .library-icon,
+.folder-row:hover .library-icon {
+  color: currentColor;
+}
+
+.library-disclosure svg {
+  width: 16px;
+  height: 16px;
+}
+
+.folder-row:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+.folder-row:not(:disabled):hover {
+  background: rgb(255 255 255 / 7%);
+  color: #f4f2eb;
+}
+
+.folder-row.selected {
+  background: rgb(255 255 255 / 12%);
+  color: #fff;
+  font-weight: 600;
+}
+
+.folder-count {
+  color: #9ea09a;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.folder-root {
+  color: #dedfd9;
+  font-size: 15.5px;
+  line-height: 1.25;
+}
+
+.workspace-notes {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border-right: 1px solid var(--line);
+  background: color-mix(in srgb, var(--paper) 89%, var(--chrome));
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  font-optical-sizing: auto;
+}
+
+.workspace-notes.accepting-note-drop::after {
+  content: 'Drop to add to Recent Notes';
+  position: absolute;
+  z-index: 30;
+  inset: 8px;
+  display: grid;
+  place-items: center;
+  border: 2px dashed color-mix(in srgb, var(--accent) 65%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  color: var(--accent);
+  font: 600 13px/1.2 var(--sans);
+  pointer-events: none;
+  backdrop-filter: blur(8px);
+}
+
+.notes-header {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 58px;
+  padding: 0 11px 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.notes-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+  margin-right: auto;
+  border: 0;
+  border-radius: 7px;
+  padding: 6px 6px 6px 0;
+  background: transparent;
+  color: var(--ink);
+  font: 600 14px/1.2 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+  letter-spacing: -0.01em;
+}
+
+.notes-title:hover {
+  color: var(--accent);
+}
+
+.notes-action {
+  display: grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+}
+
+.notes-action:hover,
+.notes-action:focus-visible {
+  background: color-mix(in srgb, var(--soft) 86%, transparent);
+  color: var(--ink);
+}
+
+.notes-action svg,
+.note-pin svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.notes-search-wrap {
+  display: none;
+  align-items: center;
+  gap: 5px;
+  width: 100%;
+}
+
+.notes-header.searching .notes-title,
+.notes-header.searching > .notes-action:not(.close-search) {
+  display: none;
+}
+
+.notes-header.searching .notes-search-wrap {
+  display: flex;
+}
+
+.workspace-search {
+  min-width: 0;
+  flex: 1;
+  height: 34px;
+  border: 1px solid var(--accent);
+  border-radius: 17px;
+  outline: none;
+  padding: 0 12px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 13px -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+}
+
+.workspace-search:focus {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+}
+
+.close-search {
+  flex: 0 0 auto;
+  font-size: 18px;
+}
+
+.notes-menu {
+  position: absolute;
+  z-index: 20;
+  top: 50px;
+  left: 10px;
+  right: 10px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 97%, transparent);
+  box-shadow: 0 16px 42px rgb(34 29 22 / 20%);
+  backdrop-filter: blur(18px);
+}
+
+.notes-menu[hidden] {
+  display: none;
+}
+
+.notes-menu-count {
+  padding: 5px 9px;
+  color: var(--ink-3);
+  font-size: 11px;
+}
+
+.notes-menu-section {
+  padding: 8px 9px 3px;
+  color: var(--ink-3);
+  font: 600 10px/1 var(--sans);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.notes-menu-row {
+  display: block;
+  width: 100%;
+  min-height: 29px;
+  border: 0;
+  border-radius: 6px;
+  padding: 5px 9px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 12px var(--sans);
+}
+
+.notes-menu-row:not(:disabled):hover {
+  background: color-mix(in srgb, var(--soft) 86%, transparent);
+}
+
+.notes-menu-row:disabled {
+  color: var(--ink-3);
+}
+
+.note-context-menu {
+  position: fixed;
+  z-index: 100;
+  width: 210px;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  box-shadow: 0 18px 46px rgb(30 27 22 / 24%);
+  backdrop-filter: blur(20px);
+}
+
+.note-context-menu[hidden] {
+  display: none;
+}
+
+.note-context-menu hr {
+  margin: 4px 3px;
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+.note-context-row {
+  display: block;
+  width: 100%;
+  min-height: 27px;
+  border: 0;
+  border-radius: 6px;
+  padding: 4px 10px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 13px/1.25 -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+}
+
+.note-context-row:not(:disabled):hover,
+.note-context-row:not(:disabled):focus-visible {
+  outline: none;
+  background: var(--accent);
+  color: #fff;
+}
+
+.note-context-row:disabled {
+  color: var(--ink-3);
+}
+
+/* A flex column, not a grid. Grid sized its auto rows from the item's
+   min-height and ignored the wrapped subtitle's contribution once the subtitle
+   became a `-webkit-box` for line clamping — the track stayed at 70px while the
+   row's own content needed 110px, so every summary spilled into the row below.
+   A column has no track sizing to get wrong: each row is as tall as it is. */
+.note-items {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink-3) 42%, transparent) transparent;
+  padding: 7px;
+}
+
+.note-items::-webkit-scrollbar {
+  width: 9px;
+}
+
+.note-items::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-3) 42%, transparent) content-box;
+}
+
+.note-list-empty {
+  padding: 25px 12px;
+  color: var(--ink-3);
+  font: 13px/1.45 var(--sans);
+}
+
+.note-list-empty-action {
+  display: block;
+  margin: 7px 0 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font: 600 13px/1.45 var(--sans);
+}
+
+.note-list-empty-action:hover,
+.note-list-empty-action:focus-visible {
+  text-decoration: underline;
+}
+
+.note-item {
+  position: relative;
+  display: block;
+  align-items: start;
+  /* Never shrink to fit the column: the row is as tall as its content. */
+  flex: 0 0 auto;
+  width: 100%;
+  min-height: 70px;
+  border-radius: 9px;
+  background: transparent;
+}
+
+.note-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  bottom: 0;
+  left: 14px;
+  height: 1px;
+  background: color-mix(in srgb, var(--line) 72%, transparent);
+  opacity: 1;
+  transition: opacity 120ms ease;
+}
+
+.note-item:hover {
+  background: color-mix(in srgb, var(--soft) 90%, transparent);
+}
+
+.note-item.selected::before {
+  content: '';
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 0;
+  width: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+}
+
+/* Hover is an ephemeral action state, so its separator recedes until the
+ * pointer leaves. Selection is instead expressed by the left-hand rule. */
+.note-item:hover::after {
+  opacity: 0;
+}
+
+.note-select {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 8px;
+  width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 10px 40px 9px 12px;
+  background: transparent;
+  text-align: left;
+}
+
+.note-select strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-select strong.renameable {
+  cursor: text;
+}
+
+.note-rename {
+  position: absolute;
+  z-index: 2;
+  top: 9px;
+  right: 42px;
+  left: 11px;
+  box-sizing: border-box;
+  width: calc(100% - 53px);
+  padding: 1px 3px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+/* Adaptive, but bounded. The row grows with the summary instead of clipping
+   it to one line — a two-sentence summary carries its specific detail in the
+   second half. Left unbounded it swallowed the row: 180 characters in a 300px
+   column is five lines, which buries the title the reader is scanning for and
+   makes the list all subtitle. Three lines fits a two-sentence summary at this
+   column width and keeps the row recognisably a row. */
+.note-select span {
+  display: -webkit-box;
+  grid-column: 1 / -1;
+  overflow: hidden;
+  color: var(--ink-3);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.35;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+.note-select time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.note-pinned-status {
+  display: inline-grid;
+  place-items: center;
+  width: 12px;
+  height: 12px;
+  color: var(--accent);
+}
+
+.note-pinned-status svg {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.workspace-notes[data-preview='small'] .note-item {
+  min-height: 54px;
+}
+
+.workspace-notes[data-preview='small'] .note-select span {
+  display: none;
+}
+
+.workspace-notes[data-preview='medium'] .note-select span {
+  -webkit-line-clamp: 3;
+}
+
+.workspace-notes[data-preview='small'] .note-close,
+.workspace-notes[data-preview='small'] .note-pin {
+  right: 4px;
+  width: 22px;
+  height: 22px;
+}
+
+.workspace-notes[data-preview='small'] .note-close {
+  top: 3px;
+}
+
+.workspace-notes[data-preview='small'] .note-pin {
+  bottom: 3px;
+}
+
+.workspace-notes[data-preview='small'] .note-close svg,
+.workspace-notes[data-preview='small'] .note-pin svg {
+  width: 14px;
+  height: 14px;
+}
+
+.workspace-notes[data-preview='large'] .note-item {
+  min-height: 104px;
+}
+
+.workspace-notes[data-preview='large'] .note-select span {
+  -webkit-line-clamp: 5;
+}
+
+.note-pin {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.note-close {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.note-close:hover,
+.note-close:focus-visible {
+  background: color-mix(in srgb, var(--soft) 88%, transparent);
+  color: var(--ink);
+}
+
+.note-item:hover .note-close,
+.note-close:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.note-close svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.note-item:hover .note-pin,
+.note-pin:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.note-pin.pinned {
+  color: var(--accent);
+}
+
+.note-pin:hover {
+  background: color-mix(in srgb, var(--soft) 88%, transparent);
+  color: var(--accent);
+}
+
+.notes-title svg {
+  display: block;
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sidebar-settings-popover {
+  top: auto;
+  right: 6px;
+  bottom: 48px;
+  left: 6px;
+  width: auto;
+  color: var(--ink);
+}
+
+.sidebar-settings-popover .heading-row,
+.sidebar-settings-popover .style-row,
+.sidebar-settings-popover .inline-row,
+.sidebar-settings-popover .move-row {
+  display: none;
+}
+
+.document-surface {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.document-scroll-track {
+  position: absolute;
+  z-index: 8;
+  top: 12px;
+  right: 3px;
+  bottom: 12px;
+  width: 10px;
+  border-radius: 999px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+:root[data-shell='native'] .document-scroll-track {
+  /* The native titlebar lives inside the document pane. Begin the reading
+     indicator below it, alongside the actual page rather than the chrome. */
+  top: 62px;
+}
+
+.document-scroll-track.is-scrollable {
+  opacity: 1;
+}
+
+.document-scroll-thumb {
+  position: absolute;
+  top: 0;
+  right: 2px;
+  width: 5px;
+  min-height: 34px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink-3) 48%, transparent);
+  cursor: default;
+  pointer-events: auto;
+  transition: width 100ms ease, background-color 100ms ease;
+  will-change: transform;
+}
+
+.document-scroll-track:hover .document-scroll-thumb,
+.document-scroll-thumb.is-dragging {
+  right: 1px;
+  width: 7px;
+  background: color-mix(in srgb, var(--ink-2) 66%, transparent);
+}
+
+.workspace-body.navigation-hidden {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workspace-body.navigation-hidden .workspace-folders,
+.workspace-body.navigation-hidden .workspace-notes {
+  display: none;
+}
+
+.workspace-body[data-layout='notes'] {
+  grid-template-columns: var(--notes-column-width) minmax(0, 1fr);
+}
+
+.workspace-body[data-layout='notes'] .workspace-folders {
+  display: none;
+}
+
+.notes-action:disabled,
+.note-pin:disabled {
+  cursor: default;
+  opacity: 0.32;
+}
+
+@media (max-width: 820px) {
+  .workspace-body {
+    grid-template-columns: 280px minmax(0, 1fr);
+  }
+  .workspace-folders { display: none; }
+}
+
+@media (max-width: 620px) {
+  .workspace-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .document-surface { display: none; }
+  /* Editor Only is the escape hatch at every effective viewport size. Browser
+     magnification, a narrow window, or accessibility scaling must never make
+     the open document disappear with no way to zoom it back. */
+  .workspace-body.navigation-hidden .document-surface { display: flex; }
+}
+
+.page {
+  /* Reading width is a document-level preference (D6/EDITOR-3), clamped so a
+     wide column can never underlap the window edge. */
+  width: min(var(--reader-width), calc(100% - 32px));
+  margin: 0 auto;
+  padding: 68px 0 140px;
+}
+
+.continue-writing {
+  display: block;
+  width: min(680px, calc(100% - 64px));
+  margin: -98px auto 60px;
+  padding: 11px 14px;
+  border: 1px dashed transparent;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ink-3);
+  text-align: left;
+  font: 12px/1.2 var(--sans);
+}
+
+.continue-writing:hover,
+.continue-writing:focus-visible {
+  border-color: var(--line);
+  background: var(--soft);
+  color: var(--ink-2);
+  outline: none;
+}
+
+.note-title {
+  font: 700 calc(36px * var(--reader-scale)) / 1.15 var(--sans);
+  letter-spacing: -0.035em;
+  margin: 0 0 8px;
+}
+
+.date {
+  font-size: 12px;
+  color: var(--ink-3);
+  margin-bottom: 38px;
+}
+
+/* The editable surface. Serif body text keeps long notes readable; system sans
+   is reserved for titles and chrome, monospace for source (DESIGN.md §10.4). */
+.milkdown .ProseMirror {
+  outline: none;
+  /* Reserve a real hit area for the quiet drag gutter. Keeping it inside the
+     editor root lets pointer events reach the reorder transaction without
+     stealing text selection from the page itself. */
+  padding-left: 26px;
+  /* D6: family and size are document-level preferences, never per selection. */
+  font: calc(18px * var(--reader-scale)) / var(--reader-leading) var(--reader-body);
+  letter-spacing: -0.003em;
+  color: var(--ink);
+}
+
+.milkdown .ProseMirror > * {
+  margin: 0 0 var(--reader-para-space);
+}
+
+/* First-line indentation, the book convention. Top-level prose only: list
+   items, code, and headings never indent. */
+.milkdown .ProseMirror > p {
+  text-indent: var(--reader-indent);
+}
+
+/* The handle is quiet until a block is the thing being corrected. The whole
+   block carries the native drag gesture so prose stays a single canvas rather
+   than gaining an editor sidebar or separate block mode. */
+.milkdown .ProseMirror > * {
+  position: relative;
+}
+
+.milkdown .ProseMirror > *::after {
+  position: absolute;
+  left: -22px;
+  top: 0.35em;
+  width: 10px;
+  height: 17px;
+  color: var(--ink-3);
+  content: '';
+  cursor: grab;
+  /* This is visual feedback only. The block owns reordering, and controls
+     nested inside it (such as the fold chevron) must remain clickable. */
+  pointer-events: none;
+  background-image: radial-gradient(circle, currentColor 1.1px, transparent 1.5px);
+  background-position: 0 0;
+  background-repeat: repeat-y;
+  background-size: 5px 5px;
+  opacity: 0;
+  transition: opacity 120ms ease;
+}
+
+.milkdown .ProseMirror > *:hover::after,
+.milkdown .ProseMirror > *:focus-within::after {
+  opacity: 0.58;
+}
+
+.milkdown .ProseMirror > *:active::after {
+  cursor: grabbing;
+}
+
+.milkdown .ProseMirror h1 {
+  font: 700 calc(36px * var(--reader-scale)) / 1.15 var(--sans);
+  letter-spacing: -0.035em;
+  margin: 0 0 8px;
+}
+
+.milkdown .ProseMirror h2 {
+  font: 700 calc(23px * var(--reader-scale)) / 1.3 var(--sans);
+  letter-spacing: -0.022em;
+  margin: 40px 0 13px;
+}
+
+.milkdown .ProseMirror h3 {
+  font: 700 calc(19px * var(--reader-scale)) / 1.35 var(--sans);
+  letter-spacing: -0.018em;
+  margin: 30px 0 11px;
+}
+
+.milkdown .ProseMirror ul,
+.milkdown .ProseMirror ol {
+  padding-left: 26px;
+}
+
+.milkdown .ProseMirror li {
+  margin: 0 0 7px;
+}
+
+.milkdown .ProseMirror li > p {
+  margin: 0;
+}
+
+.milkdown .ProseMirror blockquote {
+  border-left: 3px solid var(--line);
+  padding-left: 16px;
+  color: var(--ink-2);
+  margin-left: 0;
+}
+
+.milkdown .ProseMirror code {
+  font: 0.86em var(--mono);
+  background: var(--soft);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+.milkdown .ProseMirror pre {
+  background: var(--soft);
+  border-radius: 10px;
+  padding: 16px 18px;
+  overflow-x: auto;
+}
+
+.milkdown .ProseMirror pre code {
+  background: none;
+  padding: 0;
+  font-size: 12.5px;
+  line-height: 1.55;
+}
+
+/* A pathological generated report can contain tens of thousands of GFM table
+   cells. These are real tables, but their rows are virtualised: the visible
+   window owns a few rows while the source remains complete and portable. */
+.milkdown .ProseMirror .deferred-table {
+  margin: 26px 0;
+  color: var(--ink-2);
+  box-sizing: border-box;
+}
+
+.milkdown .ProseMirror .deferred-table h3 {
+  margin: 0;
+  color: var(--ink);
+  font: 700 16px/1.25 var(--sans);
+  letter-spacing: -0.01em;
+}
+
+.milkdown .ProseMirror .deferred-table p {
+  margin: 0;
+  font: 13px/1.45 var(--sans);
+}
+
+.milkdown .ProseMirror .deferred-table-detail {
+  color: var(--ink);
+  font-weight: 650;
+}
+
+.milkdown .ProseMirror .deferred-table-explanation {
+  margin-top: 3px;
+  color: var(--ink-3);
+}
+
+.deferred-table-content {
+  margin-top: 11px;
+}
+
+.virtual-table-scroll {
+  max-width: 100%;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable both-edges;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--paper);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--ink) 4%, transparent);
+}
+
+.virtual-table-scroll:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: 2px;
+}
+
+.milkdown .ProseMirror table.virtual-markdown-table {
+  width: max-content;
+  min-width: 100%;
+  margin: 0;
+}
+
+.milkdown .ProseMirror .virtual-markdown-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.milkdown .ProseMirror .virtual-markdown-table th,
+.milkdown .ProseMirror .virtual-markdown-table td {
+  height: 32px;
+  padding: 5px 10px;
+  font-size: 13px;
+  line-height: 20px;
+  white-space: nowrap;
+}
+
+.milkdown .ProseMirror .virtual-table-spacer td {
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.deferred-table-copy {
+  margin-top: 11px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  padding: 6px 9px;
+  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  color: var(--ink-2);
+  font: 650 11px/1 var(--sans);
+}
+
+.deferred-table-copy:hover,
+.deferred-table-copy:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 60%, var(--line));
+  color: var(--ink);
+  outline: none;
+}
+
+.deferred-table-copy:disabled {
+  cursor: progress;
+  opacity: 0.72;
+}
+
+.milkdown .ProseMirror hr {
+  border: 0;
+  height: 1px;
+  background: var(--line);
+  margin: 37px 0;
+}
+
+.milkdown .ProseMirror a {
+  color: var(--accent);
+  cursor: pointer;
+}
+
+/*
+ * Folding (EDITOR-3). Quiet gutter chevrons: invisible until the block is
+ * hovered, always visible while folded so hidden content is never a secret.
+ * Folding is view state only — the source Markdown does not change.
+ */
+.milkdown .ProseMirror .sm-foldable {
+  position: relative;
+}
+
+.sm-fold-chevron {
+  position: absolute;
+  top: 0.32em;
+  left: -26px;
+}
+
+/* Top-level foldables share their gutter with the six-dot drag handle
+   (left:-22px, EDITOR-2), so their chevron sits one step further out. */
+.milkdown .ProseMirror > .sm-foldable > .sm-fold-chevron {
+  left: -48px;
+}
+
+.sm-fold-chevron {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--ink-3);
+  border-radius: 5px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 120ms ease, transform 120ms ease;
+  user-select: none;
+}
+
+.sm-fold-chevron svg {
+  width: 11px;
+  height: 11px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.milkdown .ProseMirror .sm-foldable:hover > .sm-fold-chevron,
+.sm-fold-chevron.is-folded {
+  opacity: 1;
+}
+
+.sm-fold-chevron:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.sm-fold-chevron.is-folded {
+  transform: rotate(-90deg);
+  color: var(--accent);
+}
+
+/* Folded content is hidden from view, never removed from the document. */
+.milkdown .ProseMirror .sm-fold-hidden {
+  display: none;
+}
+
+/* A folded heading keeps a quiet ellipsis so collapsed content is signalled. */
+.milkdown .ProseMirror .sm-fold-head::after {
+  content: ' …';
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+/*
+ * Temporary contents popover (EDITOR-3). A popover anchored to the titlebar —
+ * deliberately not a sidebar: it opens over the page, navigates, and closes.
+ */
+.titlebar .left {
+  /* Anchors the contents popover to the leading control cluster. */
+  position: relative;
+}
+
+/* The temporary document-information panel: statistics and contents. It floats
+   over the page's trailing edge rather than taking a column, so opening it
+   never reflows the sentence being read. */
+.info-panel {
+  position: absolute;
+  z-index: 24;
+  top: 14px;
+  right: 14px;
+  bottom: 14px;
+  width: 264px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  box-shadow: 0 14px 42px rgb(32 29 24 / 18%);
+  backdrop-filter: blur(18px);
+}
+
+.info-panel[hidden] {
+  display: none;
+}
+
+.info-panel-title {
+  font: 600 12px/1.2 var(--sans);
+  color: var(--ink-2);
+  text-align: center;
+}
+
+.info-panel-tabs {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 2px;
+  background: var(--soft);
+  border-radius: 8px;
+}
+
+.info-panel-tab {
+  height: 25px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-3);
+  display: grid;
+  place-items: center;
+}
+
+.info-panel-tab svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentcolor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.info-panel-tab:hover {
+  color: var(--ink);
+}
+
+.info-panel-tab.selected {
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgb(32 29 24 / 12%);
+}
+
+.info-panel-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.info-empty {
+  padding: 8px 2px;
+  font: 400 11.5px/1.45 var(--sans);
+  color: var(--ink-3);
+}
+
+.info-statistics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.info-statistic {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 9px 10px;
+  border-radius: 9px;
+  background: var(--soft);
+}
+
+.info-statistic.wide {
+  grid-column: span 2;
+}
+
+.info-statistic strong {
+  font: 600 17px/1.1 var(--sans);
+  color: var(--ink);
+}
+
+.info-statistic span {
+  font: 400 10.5px/1.2 var(--sans);
+  color: var(--ink-3);
+}
+
+/* Named, dashed, and dimmed: a measurement this shell cannot take yet reads as
+   unavailable rather than as zero. */
+.info-statistic.unavailable {
+  opacity: 0.55;
+}
+
+.info-outline button {
+  display: block;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  border-radius: 6px;
+  text-align: left;
+  padding: 6px 8px;
+  font: 500 12px/1.35 var(--sans);
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.info-outline button:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.info-outline button[data-level='2'] {
+  padding-left: 20px;
+}
+
+.info-outline button[data-level='3'],
+.info-outline button[data-level='4'],
+.info-outline button[data-level='5'],
+.info-outline button[data-level='6'] {
+  padding-left: 32px;
+  font-weight: 400;
+}
+
+/* The styles bar and the word count travel together, as one strip of optional
+   furniture centred under the page. */
+.styles-dock {
+  order: 2;
+  align-self: center;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+}
+
+.styles-dock .styles-bar {
+  order: 0;
+  align-self: auto;
+  margin: 0;
+}
+
+.word-count {
+  min-height: 37px;
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  box-shadow: 0 10px 30px rgb(40 35 29 / 16%);
+  backdrop-filter: blur(18px);
+  font: 500 12px/1 var(--sans);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+
+.word-count[hidden] {
+  display: none;
+}
+
+.history-navigation {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.history-navigation[hidden] {
+  display: none;
+}
+
+/* Bear's trailing pair: the styles-bar switch reads as what it toggles. */
+.tool.styles-bar-toggle {
+  font: 600 11px/1 var(--sans);
+  letter-spacing: 0.5px;
+}
+
+.tool.styles-bar-toggle i {
+  font-style: italic;
+}
+
+.tool.styles-bar-toggle.active {
+  color: var(--accent);
+}
+
+/* Portable Markdown images and file references. The source remains an
+   ordinary relative `![alt](path)`; this frame simply ensures a browser's
+   inability to reach the local sibling is obvious rather than a broken icon. */
+.milkdown .ProseMirror .asset-image {
+  display: inline-block;
+  position: relative;
+  max-width: 100%;
+  margin: 10px 0;
+  vertical-align: middle;
+}
+
+.milkdown .ProseMirror .asset-image img {
+  display: block;
+  max-width: min(100%, 760px);
+  max-height: 560px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--soft);
+}
+
+.milkdown .ProseMirror .asset-image-edit-alt {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  border: 0;
+  border-radius: 5px;
+  padding: 4px 6px;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  color: var(--ink-2);
+  font: 10px var(--sans);
+  opacity: 0;
+}
+
+.milkdown .ProseMirror .asset-image:hover .asset-image-edit-alt,
+.milkdown .ProseMirror .asset-image:focus-within .asset-image-edit-alt {
+  opacity: 1;
+}
+
+.milkdown .ProseMirror .asset-image-missing {
+  display: block;
+  max-width: 560px;
+  padding: 10px 12px;
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  color: var(--ink-3);
+  background: var(--soft);
+  font: 12px/1.45 var(--sans);
+}
+
+/* GFM constructs (DESIGN.md §6). Tables and task lists are portability tier 1
+   (§5), so they have to look native rather than like an afterthought. */
+.milkdown .ProseMirror table {
+  width: 100%;
+  /* This is deliberately the browser default. GFM records no widths, so a
+     reopened table must size from its content, just as it did before editing
+     affordances were added. `Equal columns` remains an explicit, temporary
+     reader choice; it is not a reload-time guess. */
+  table-layout: auto;
+  border-collapse: collapse;
+  font: 15px/1.5 var(--sans);
+  margin: 26px 0;
+  overflow: hidden;
+}
+
+.milkdown .ProseMirror th,
+.milkdown .ProseMirror td {
+  border: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.milkdown .ProseMirror th { padding: 9px 12px; }
+.milkdown .ProseMirror td { padding: 6px 12px; }
+
+/* A deliberate row/column selection stays visible long enough to apply one
+   ordinary Markdown mark. It is not a spreadsheet range editor. */
+.milkdown .ProseMirror .selectedCell {
+  background: color-mix(in srgb, var(--accent) 14%, var(--paper)) !important;
+  box-shadow: inset 0 2px 0 color-mix(in srgb, var(--accent) 68%, transparent),
+    inset 0 -2px 0 color-mix(in srgb, var(--accent) 68%, transparent);
+}
+
+/* Width drag handles are a reader affordance. They only change the live table
+   layout; ordinary GFM intentionally carries no column-width property. */
+.milkdown .ProseMirror .column-resize-handle {
+  position: absolute;
+  z-index: 4;
+  top: 0;
+  right: -3px;
+  bottom: 0;
+  width: 6px;
+  background: transparent;
+  cursor: col-resize;
+}
+
+.milkdown .ProseMirror td:hover .column-resize-handle,
+.milkdown .ProseMirror th:hover .column-resize-handle {
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.milkdown .ProseMirror.resize-cursor {
+  cursor: col-resize;
+}
+
+.table-controls {
+  position: fixed;
+  z-index: 45;
+}
+
+.table-controls[hidden] {
+  display: none;
+}
+
+.table-control-group {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2px;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--paper) 92%, var(--soft));
+}
+
+.table-controls-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 9px;
+  background: color-mix(in srgb, var(--paper) 96%, transparent);
+  box-shadow: 0 8px 20px rgba(32, 29, 24, 0.14);
+  color: var(--ink-2);
+  font: 650 11px/1 var(--sans);
+}
+
+.table-controls-trigger::after {
+  content: '⌄';
+  color: var(--ink-3);
+  font-size: 13px;
+}
+
+.table-controls-trigger[aria-expanded='true'] {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.table-controls-menu {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(138px, 1fr));
+  gap: 6px;
+  width: min(356px, calc(100vw - 24px));
+  max-height: calc(100vh - 24px);
+  padding: 6px;
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper) 97%, transparent);
+  box-shadow: 0 14px 32px rgba(32, 29, 24, 0.18);
+  backdrop-filter: blur(16px);
+}
+
+.table-controls-menu[hidden] {
+  display: none;
+}
+
+.table-control-group-label {
+  grid-column: 1 / -1;
+  padding: 1px 2px 4px;
+  color: var(--ink-3);
+  font: 700 9px/1 var(--sans);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.table-control-group button {
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  padding: 5px 6px;
+  color: var(--ink-2);
+  font: 600 10px/1.25 var(--sans);
+  text-align: left;
+}
+
+.table-control-group button:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.milkdown .ProseMirror th {
+  background: var(--soft);
+  font-weight: 650;
+  color: var(--ink);
+}
+
+.milkdown .ProseMirror tr:nth-child(even) td {
+  background: color-mix(in srgb, var(--soft) 42%, transparent);
+}
+
+/* Wide tables scroll inside their own box; the page never scrolls sideways. */
+.milkdown .ProseMirror .tableWrapper {
+  overflow-x: auto;
+}
+
+.milkdown .ProseMirror del,
+.milkdown .ProseMirror s {
+  color: var(--ink-3);
+}
+
+.milkdown .ProseMirror li[data-item-type='task'] {
+  list-style: none;
+  margin-left: -22px;
+  padding-left: 26px;
+  position: relative;
+}
+
+/* Milkdown's GFM task item carries its state on the node as data-checked and
+   emits no <input>, so the box is drawn here rather than assumed. */
+.milkdown .ProseMirror li[data-item-type='task']::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--ink-3);
+  border-radius: 4px;
+  background: var(--paper);
+  /* The box is clickable (installTaskToggling), so it says so. */
+  cursor: pointer;
+}
+
+.milkdown .ProseMirror li[data-checked='true']::before {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.milkdown .ProseMirror li[data-checked='true']::after {
+  content: '';
+  position: absolute;
+  left: 4.5px;
+  top: 11px;
+  width: 6px;
+  height: 3px;
+  border-left: 1.8px solid var(--paper);
+  border-bottom: 1.8px solid var(--paper);
+  transform: rotate(-45deg);
+}
+
+.milkdown .ProseMirror li[data-checked='true'] {
+  color: var(--ink-3);
+}
+
+/* Rendered block frame (DESIGN.md §10.2). Every extension-rendered block shares
+   this shell so a future third-party block is indistinguishable from a built-in.
+   The frame is quiet by default and its controls only surface on hover or focus
+   — the resolution of the framed-vs-bare open question, recorded in
+   docs/decisions/0003-rendered-block-frame.md. */
+.diagram {
+  position: relative;
+  margin: 29px 0 25px;
+  padding: 34px 28px 29px;
+  background: var(--soft);
+  border-radius: 13px;
+  overflow: hidden;
+}
+
+/*
+ * A selected diagram has to look selected. The block is deletable the moment
+ * it takes a NodeSelection, and without a visible outline that reads as the
+ * click having done nothing at all.
+ */
+.diagram.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/*
+ * The grip appears only on a selected svg figure: selection is the mode in
+ * which the block is an object rather than a drawing. Bottom-right, the
+ * macOS-native corner.
+ */
+.diagram-resize-grip {
+  display: none;
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 14px;
+  height: 14px;
+  cursor: ew-resize;
+  border-right: 2px solid var(--accent);
+  border-bottom: 2px solid var(--accent);
+  border-bottom-right-radius: 4px;
+}
+
+.diagram.is-selected .diagram-resize-grip {
+  display: block;
+}
+
+/*
+ * A floated chart shares the measure with prose. Width comes from the meta
+ * (or natural size) via the inline svg width; the figure shrinks to it.
+ * Narrow viewports ignore float — squeezed wrap columns are worse than a
+ * stacked chart (§5 of the chart-size spec).
+ */
+.diagram.diagram--float-left,
+.diagram.diagram--float-right {
+  width: fit-content;
+  max-width: 60%;
+  /*
+   * `.diagram` is already `position: relative` (for the label and resize
+   * grip), which every wrapped paragraph in the Milkdown content also is —
+   * ProseMirror positions paragraphs for its own cursor/gap-cursor overlay.
+   * Tied at the same (auto) stack level, the later sibling wins hit-testing
+   * regardless of the float, so a right-click meant for the chart landed on
+   * the invisible prose box wrapped beside it instead. An explicit stack
+   * level puts the chart back on top of the text flowing around it.
+   */
+  z-index: 1;
+}
+
+.diagram.diagram--float-left {
+  float: left;
+  margin: 4px 18px 10px 0;
+}
+
+.diagram.diagram--float-right {
+  float: right;
+  margin: 4px 0 10px 18px;
+}
+
+/* Never let a document-final float overhang the page. */
+.milkdown .ProseMirror::after {
+  content: '';
+  display: block;
+  clear: both;
+}
+
+@media (max-width: 480px) {
+  .diagram.diagram--float-left,
+  .diagram.diagram--float-right {
+    float: none;
+    max-width: 100%;
+    margin: 0;
+  }
+}
+
+.diagram-label {
+  position: absolute;
+  top: 11px;
+  left: 14px;
+  font: 9.5px var(--mono);
+  color: var(--ink-3);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.diagram:hover .diagram-label,
+.diagram:focus-within .diagram-label {
+  opacity: 1;
+}
+
+/*
+ * §2 chip-chrome: selection is the mode switch — no chrome while reading.
+ * Appears in `selectNode()`, gone in `deselectNode()`. `.note-context-menu`
+ * family styling (surface, 0.5px strong border, 8px radius), so a block's own
+ * controls read as the same app as its right-click menu.
+ *
+ * `left` alongside `right` constrains the row to the figure's own box.
+ * Without it, a right-anchored row with no left edge sizes to its own content
+ * and can extend past a narrow floated figure's left boundary — `width:
+ * fit-content` once floated (§5) — straight into `.diagram`'s `overflow:
+ * hidden` and out of reach (final review Finding 5). `flex-wrap` lets a row
+ * that still doesn't fit spill onto a second line instead of clipping.
+ */
+.diagram-chips {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 6px;
+  animation: diagram-chips-in 0.12s ease-out;
+}
+
+@keyframes diagram-chips-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: none; }
+}
+
+.diagram-chip {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 13px;
+  border: 0.5px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.diagram-chip:hover {
+  background: var(--accent);
+  color: #fff;
+}
+
+.diagram-chip.is-active {
+  background: var(--accent-soft);
+}
+
+.diagram-chip.diagram-chip-danger:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+/*
+ * Task 4 §2: a figure rendering under 420px collapses chip labels to icons —
+ * Edit source and Delete lose their (only) visible text; the zoom pill and
+ * float segment were already icon-only, so they are unaffected. Every chip's
+ * `aria-label` carries its name regardless, so nothing here changes what a
+ * screen reader, or a `getByRole('button', { name })` lookup, sees.
+ */
+.diagram-chips.is-narrow .chip-label {
+  display: none;
+}
+
+/*
+ * Final review Finding 4: without this, a narrow Edit source/Delete chip
+ * collapsed to a blank pill — `.chip-label` hides above, and neither chip had
+ * anything else in its markup to show. `.chip-glyph` is the icon half of the
+ * same label/glyph swap the zoom and float segments already do implicitly
+ * (they were icon-only from the start); it stays hidden at rest so a chip
+ * with room to spare keeps reading as a word, not a cryptic symbol.
+ */
+.diagram-chips .chip-glyph {
+  display: none;
+}
+
+.diagram-chips.is-narrow .chip-glyph {
+  display: inline;
+}
+
+.diagram-render {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 76px;
+}
+
+/*
+ * Fill the measure rather than merely refusing to exceed it.
+ *
+ * `max-width: 100%` alone can only shrink, so a small graph rendered at its
+ * natural 445pt and sat marooned in a 660px column. Both engines emit a
+ * `viewBox`, so widening scales the drawing cleanly.
+ *
+ * The ceiling is the other half. A three-node graph stretched across a wide
+ * window inflates its labels to headline size and reads as a mistake, so the
+ * diagram stops growing well before the column does.
+ *
+ * `svg` blocks are the exception: DiagramNodeView writes an explicit width
+ * (the author's own size, capped at the column), which beats the 100% here.
+ */
+.diagram-render svg {
+  width: 100%;
+  max-width: min(100%, 720px);
+  height: auto;
+}
+
+/*
+ * Past `#WIDEST_SQUEEZE`, legibility beats fitting: the diagram keeps its own
+ * size and the figure scrolls. Only this box scrolls — the document never
+ * scrolls sideways, which is the rule a wide table has to follow too.
+ */
+.diagram-render.is-wide {
+  display: block;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.diagram-render.is-wide svg {
+  width: auto;
+  max-width: none;
+}
+
+.diagram-source-sheet {
+  position: fixed;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  width: 460px;
+  height: 280px;
+  min-width: 320px;
+  min-height: 220px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 24px);
+  resize: both;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--paper);
+  box-shadow: 0 18px 52px rgba(28, 25, 21, 0.24);
+}
+
+.diagram-source-sheet[hidden] {
+  display: none;
+}
+
+.diagram-source-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 34px;
+  padding: 0 6px 0 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--chrome);
+  color: var(--ink-2);
+  cursor: grab;
+  font: 600 11px/1.2 var(--sans);
+  user-select: none;
+}
+
+.diagram-source-title {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/*
+ * The sheet's own way out. It is `position: fixed` on <body>, so once it has
+ * been dragged — or its block has scrolled away — the figure's Done button is
+ * nowhere near it, and the sheet had no visible exit at all.
+ */
+.diagram-source-close {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font: 12px/1 var(--sans);
+  cursor: pointer;
+}
+
+.diagram-source-close:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.diagram-source-close:focus-visible {
+  outline: 2px solid var(--accent, currentColor);
+  outline-offset: 1px;
+}
+
+.diagram-source-header:active {
+  cursor: grabbing;
+}
+
+.diagram-source {
+  width: 100%;
+  min-height: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 12.5px/1.55 var(--mono);
+  padding: 12px 14px;
+  resize: none;
+  outline: none;
+}
+
+.diagram-source:focus {
+  border-color: var(--accent);
+}
+
+.settings-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(28, 25, 21, 0.32);
+}
+
+.settings-overlay[hidden] {
+  display: none;
+}
+
+.settings-panel {
+  width: 380px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--paper);
+  box-shadow: 0 18px 52px rgba(28, 25, 21, 0.24);
+}
+
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 12px 12px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.settings-title {
+  flex: 1;
+  font: 600 13px/1.2 var(--sans);
+  color: var(--ink);
+}
+
+.settings-close {
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  font: 12px/1 var(--sans);
+  cursor: pointer;
+}
+
+.settings-close:hover {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.settings-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+}
+
+.settings-body h3 {
+  margin: 0;
+  font: 600 12px/1.3 var(--sans);
+  color: var(--ink);
+}
+
+.settings-hint {
+  margin: 0;
+  font: 11.5px/1.5 var(--sans);
+  color: var(--ink-2);
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.settings-field-label {
+  font: 600 11px/1.3 var(--sans);
+  color: var(--ink-2);
+}
+
+.settings-field input {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 12.5px/1.4 var(--mono);
+}
+
+.settings-field input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.settings-load-models-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: -6px;
+}
+
+.settings-load-models {
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--ink-2);
+  font: 600 11px/1.4 var(--sans);
+  cursor: pointer;
+}
+
+.settings-load-models:hover:not(:disabled) {
+  background: var(--line);
+  color: var(--ink);
+}
+
+.settings-load-models:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.settings-model-select {
+  padding: 7px 9px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 12.5px/1.4 var(--sans);
+}
+
+.settings-model-select[hidden] {
+  display: none;
+}
+
+.settings-model-error {
+  margin: 0;
+  font: 11.5px/1.5 var(--sans);
+  color: var(--danger);
+}
+
+.settings-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.settings-save {
+  padding: 6px 16px;
+  border: 1px solid var(--accent);
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--paper);
+  font: 600 12px/1.3 var(--sans);
+  cursor: pointer;
+}
+
+/* A broken diagram shows the parser's own message and keeps its source
+   editable. Never a blank rectangle (DESIGN.md §4.4). */
+.diagram-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--danger);
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--danger) 9%, var(--paper));
+  color: var(--danger);
+  font: 11.5px/1.5 var(--mono);
+}
+
+.diagram-error-message {
+  margin: 0;
+  font: inherit;
+  white-space: pre-wrap;
+}
+
+.diagram-error-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.diagram-error-actions button {
+  padding: 3px 9px;
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--danger);
+  font: 600 11px/1.4 var(--sans);
+  cursor: pointer;
+}
+
+.diagram-error-actions button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 14%, var(--paper));
+}
+
+.diagram-error-actions button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .stage {
+    padding: 0;
+  }
+  .window {
+    width: 100%;
+    /*
+     * `100%` measures the screen, not the part of it you can see. On a phone
+     * those differ by the status bar and the home indicator, so the window
+     * overhung the viewport and everything pinned to its bottom edge — the
+     * formatting palette above all — sat just below the fold, present and
+     * unreachable. `dvh` is the visible viewport and shrinks when the keyboard
+     * arrives, which is the same question asked correctly.
+     */
+    height: 100dvh;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+  }
+  .titlebar {
+    backdrop-filter: none;
+  }
+  .filename {
+    display: none;
+  }
+  /* The status line stays. It is where every failure the shell can report is
+     written — could not open, changed on disk, save refused — and hiding it
+     made those messages invisible rather than absent. A phone has less room
+     to spare and more need to be told. */
+  .status {
+    max-width: 52vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* `.path-hide` used to take the Document list button with it. On a narrow
+     viewport that button is not decoration: it is the only control that
+     returns from an open note to the list, because the two panes cannot be
+     on screen together. Hiding it stranded the reader with no way back. */
+  .left {
+    margin-right: auto;
+  }
+  .right {
+    margin-left: auto;
+  }
+  .right .tool {
+    display: none;
+  }
+  /*
+   * Float against the viewport rather than the pane.
+   *
+   * Absolute positioning anchors to `.document-surface`, and on a phone that
+   * pane measures taller than the part of the screen you can see — so the
+   * palette obediently sat 15px below the fold: visible to the DOM, present in
+   * every measurement, and unreachable by a thumb. Fixed positioning asks the
+   * only question that matters on a small screen, which is where the viewport
+   * ends, and the inset clears the home indicator.
+   */
+  .styles-bar,
+  .styles-bar-reveal {
+    position: fixed;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+  /*
+   * The palette is authored at a fixed 436px, which is wider than the phone it
+   * is now floating on — so it reached past both edges and stopped reading as
+   * a floating thing at all. Inset from the edges instead, and let the controls
+   * share whatever width the screen has.
+   */
+  .styles-bar {
+    left: 12px;
+    right: 12px;
+    width: auto;
+    justify-content: space-around;
+    transform: none;
+  }
+  .styles-bar.is-placed {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    transform: none;
+  }
+  /* The row stays one line: low-frequency actions move into More, where the
+     exact same commands remain available. */
+  .styles-bar-overflow,
+  .styles-asset {
+    display: none;
+  }
+  .styles-overflow-menu-item {
+    display: block !important;
+  }
+  .page {
+    width: calc(100% - 42px);
+    padding-top: 44px;
+    padding-bottom: 180px;
+  }
+  .milkdown .ProseMirror {
+    font-size: 17px;
+  }
+  .diagram {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+/*
+ * Syntax highlighting (EDITOR-7). Classes come from the lowlight token walk in
+ * adapters/editor/code-highlight.ts; colours come from the reader theme.
+ * Comments reuse the quiet ink so they recede on every background.
+ */
+.milkdown .ProseMirror pre .hl-comment,
+.milkdown .ProseMirror pre .hl-quote {
+  color: var(--ink-3);
+  font-style: italic;
+}
+
+.milkdown .ProseMirror pre .hl-keyword,
+.milkdown .ProseMirror pre .hl-selector-tag,
+.milkdown .ProseMirror pre .hl-doctag {
+  color: var(--code-keyword);
+}
+
+.milkdown .ProseMirror pre .hl-string,
+.milkdown .ProseMirror pre .hl-regexp,
+.milkdown .ProseMirror pre .hl-addition {
+  color: var(--code-string);
+}
+
+.milkdown .ProseMirror pre .hl-number,
+.milkdown .ProseMirror pre .hl-literal,
+.milkdown .ProseMirror pre .hl-symbol,
+.milkdown .ProseMirror pre .hl-bullet {
+  color: var(--code-number);
+}
+
+.milkdown .ProseMirror pre .hl-title,
+.milkdown .ProseMirror pre .hl-section {
+  color: var(--code-function);
+}
+
+.milkdown .ProseMirror pre .hl-type,
+.milkdown .ProseMirror pre .hl-built_in,
+.milkdown .ProseMirror pre .hl-class {
+  color: var(--code-type);
+}
+
+.milkdown .ProseMirror pre .hl-variable,
+.milkdown .ProseMirror pre .hl-template-variable,
+.milkdown .ProseMirror pre .hl-attr,
+.milkdown .ProseMirror pre .hl-attribute,
+.milkdown .ProseMirror pre .hl-property,
+.milkdown .ProseMirror pre .hl-deletion {
+  color: var(--code-variable);
+}
+
+.milkdown .ProseMirror pre .hl-meta,
+.milkdown .ProseMirror pre .hl-link {
+  color: var(--code-meta);
+}
+
+/*
+ * In-document find (EDITOR-7). A floating pill over the editor section —
+ * temporary by construction: closed means removed match decorations and no
+ * residue anywhere.
+ */
+.find-bar {
+  display: none;
+  position: absolute;
+  z-index: 22;
+  top: 12px;
+  right: 18px;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 7px;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow: 0 10px 32px rgba(32, 29, 24, 0.16);
+  backdrop-filter: blur(18px);
+}
+
+.find-bar.open {
+  display: flex;
+}
+
+.find-bar input {
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--ink);
+  font: 13px var(--sans);
+  width: 170px;
+  padding: 2px 4px;
+}
+
+.find-bar input::placeholder {
+  color: var(--ink-3);
+}
+
+.find-count {
+  font: 11px var(--sans);
+  color: var(--ink-3);
+  white-space: nowrap;
+  padding: 0 4px;
+}
+
+.find-bar button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.find-bar button:hover {
+  background: var(--soft);
+  color: var(--ink);
+}
+
+.find-bar button svg {
+  width: 13px;
+  height: 13px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.milkdown .ProseMirror .sm-find-match {
+  background: var(--accent-soft);
+  border-radius: 2px;
+}
+
+.milkdown .ProseMirror .sm-find-active {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+/* ---- paste-exhaust cards (RENDERERS.md, the exhaust tier) ---- */
+
+.text-card {
+  margin: 0;
+  padding: 14px 16px;
+  font: 0.82rem/1.55 ui-monospace, "SF Mono", Menlo, monospace;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+  text-align: left;
+}
+
+/*
+ * The 16 named ANSI colours as theme variables. Indices 16-255 and truecolor
+ * are absolute and come through as literal values from the parser; only these
+ * names get to follow the reader's ground, which is what keeps a terminal
+ * green legible on both paper and dark.
+ */
+:root {
+  --ansi-0: #4a4741;  --ansi-8: #6f6b64;
+  --ansi-1: #b4433c;  --ansi-9: #c4554d;
+  --ansi-2: #3f7a4c;  --ansi-10: #4d8a57;
+  --ansi-3: #9a6714;  --ansi-11: #b57d1f;
+  --ansi-4: #3a66a8;  --ansi-12: #4a76b8;
+  --ansi-5: #914a8c;  --ansi-13: #a3599e;
+  --ansi-6: #2d7f7a;  --ansi-14: #3d8f8a;
+  --ansi-7: #6f6b64;  --ansi-15: #242321;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ansi-0: #56534d;  --ansi-8: #7d7972;
+    --ansi-1: #e08a83;  --ansi-9: #eb9d96;
+    --ansi-2: #8fc79b;  --ansi-10: #a2d5ad;
+    --ansi-3: #ddb06a;  --ansi-11: #ecc07d;
+    --ansi-4: #8fb3e8;  --ansi-12: #a3c2f0;
+    --ansi-5: #d6a2d1;  --ansi-13: #e2b3dd;
+    --ansi-6: #86ccc7;  --ansi-14: #99d9d4;
+    --ansi-7: #cfcbc4;  --ansi-15: #efede7;
+  }
+}
+
+/* Diff: whole-line tinting, readable in both themes. */
+.diff-line { display: block; padding: 0 6px; }
+.diff-add { background: color-mix(in srgb, #4d8a57 14%, transparent); color: var(--ink); }
+.diff-del { background: color-mix(in srgb, #c4554d 13%, transparent); color: var(--ink); }
+.diff-hunk { color: var(--accent); }
+.diff-file { color: var(--ink-2); font-weight: 600; }
+
+/* JSON: a quiet foldable tree. */
+.json-card { font-size: 0.82rem; }
+.json-card details { margin-left: 0; }
+.json-card details details { margin-left: 1.1em; }
+.json-card summary { cursor: pointer; color: var(--ink-2); }
+.json-row { margin-left: 1.1em; }
+.json-key { color: var(--accent); }
+.json-str { color: #4d8a57; }
+.json-lit { color: #4a76b8; }
+
+/* Stack traces: first line visible, frames folded. */
+.stack-card summary { cursor: pointer; font-weight: 600; color: #c4554d; }
+.stack-card pre {
+  margin: 6px 0 0;
+  font: inherit;
+  color: var(--ink-2);
+  white-space: pre-wrap;
+}
+
+/* ---- formal notation: Graphviz and KaTeX (RENDERERS.md §2) ---- */
+
+/*
+ * Graphviz emits its own fixed-size SVG. This once said `max-width: 100%`, but
+ * it is the more specific selector, so it silently overrode the sizing above
+ * and reinstated the behaviour that leaves a small graph marooned. Sizing now
+ * lives in one place; this rule only stops the fixed `height` attribute from
+ * fighting the width.
+ */
+.diagram-render svg[width] {
+  height: auto;
+}
+
+/*
+ * KaTeX ships its own stylesheet, so this only places the block on the page:
+ * centred like display math, scrollable on narrow widths rather than forcing
+ * the document to scroll sideways.
+ */
+.math-block {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 0;
+  text-align: center;
+  color: var(--ink);
+}
+
+.math-block .katex {
+  font-size: 1.12em;
+}
+
+/* KaTeX's default colour is inherited, but its rules need the reader ink. */
+.math-block .katex .mord,
+.math-block .katex .mbin,
+.math-block .katex .mrel,
+.math-block .katex .mopen,
+.math-block .katex .mclose,
+.math-block .katex .mpunct {
+  color: inherit;
+}
+
+.inline-math {
+  display: inline-flex;
+  align-items: baseline;
+  max-width: 100%;
+  margin: 0 0.08em;
+  padding: 0 0.16em;
+  border-radius: 4px;
+  vertical-align: baseline;
+  cursor: text;
+}
+
+.inline-math:hover {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.inline-math .katex {
+  color: var(--ink-1);
+  font-size: 1em;
+}
+
+.wiki-link {
+  color: var(--accent);
+  text-decoration: none;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent) 28%, transparent);
+  cursor: pointer;
+}
+
+.wiki-link:hover {
+  border-bottom-color: var(--accent);
+}
+
+.milkdown .ProseMirror dl[data-type='footnote_definition'] {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.3em 0.65em;
+  margin: 1.15em 0 0;
+  padding-top: 0.75em;
+  border-top: 1px solid var(--line);
+  color: var(--ink-2);
+  font-size: 0.88em;
+}
+
+.milkdown .ProseMirror dl[data-type='footnote_definition'] dd,
+.milkdown .ProseMirror dl[data-type='footnote_definition'] p {
+  margin: 0;
+}
+
+/*
+ * Native shell adjustments (APP-2).
+ *
+ * The browser shell draws a floating window card because the page it sits on
+ * is not a window. Inside a real macOS window that card becomes a window drawn
+ * inside a window, and the decorative traffic lights sit underneath the real
+ * ones the system draws over the overlay title bar. So the native shell drops
+ * both: the app fills its window, and macOS owns the window furniture.
+ *
+ * Set by `tauri.ts`, which is the only place allowed to know which shell is
+ * running (ADR-0001 — platform decisions live at the composition root).
+ */
+:root[data-shell='native'] body {
+  background: var(--paper);
+}
+
+:root[data-shell='native'] .stage {
+  padding: 0;
+}
+
+:root[data-shell='native'] .window {
+  width: 100%;
+  height: 100vh;
+  max-height: none;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+/* macOS draws the real controls over the overlay title bar; ours would be a
+   second, dead set of lights sitting under them. */
+:root[data-shell='native'] .lights {
+  display: none;
+}
+
+/* Clear the space the system's own window controls occupy. The native
+   entrypoint installs both Tauri's drag marker and its explicit dragging API;
+   CSS never pretends to own native window movement. */
+:root[data-shell='native'] .titlebar {
+  padding: 0 18px;
+  user-select: none;
+}
+
+:root[data-shell='native'] .workspace-library-head,
+:root[data-shell='native'] .notes-header {
+  user-select: none;
+}
+
+/* The approved native wireframe does not stretch a web toolbar across the
+   library and note list. Each pane owns one quiet header; macOS owns the menu
+   and traffic lights, and the optional styles palette floats over the page. */
+:root[data-shell='native'] .native-editor-head {
+  height: 58px;
+  flex: 0 0 58px;
+  background: color-mix(in srgb, var(--paper) 94%, transparent);
+}
+
+:root[data-shell='native'] .native-editor-head .filename {
+  min-width: 0;
+  margin: 0 auto 0 0;
+  font-size: 13px;
+}
+
+:root[data-shell='native'] .native-editor-head .filename small {
+  display: none;
+}
+
+:root[data-shell='native'] .native-editor-head .right {
+  margin-left: auto;
+}
+
+:root[data-shell='native'] .native-editor-head .status {
+  flex: 0 0 auto;
+  inline-size: auto;
+  margin-right: 5px;
+}
+
+:root[data-shell='native'] .native-editor-head .work-with-ai {
+  font-size: 18px;
+}
+
+:root[data-shell='native'] .workspace-library-head {
+  padding-left: 68px;
+}
+
+:root[data-shell='native'] .workspace-body[data-layout='notes'] .notes-header {
+  /* In the two-pane layout, leave a little more breathing room after the
+     traffic-light cluster before the collection title begins. */
+  padding-left: 90px;
+}
+
+:root[data-shell='native'] .workspace-body.navigation-hidden .native-editor-head {
+  padding-left: 78px;
+}
+
+/* Reader Only has no neighbouring panes competing for titlebar space, so the
+   filename belongs at the true centre. Two- and three-pane arrangements retain
+   their native left-aligned filename. */
+:root[data-shell='native'] .workspace-body.navigation-hidden .native-editor-head .filename {
+  position: absolute;
+  left: 50%;
+  max-width: calc(100% - 220px);
+  margin: 0;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/*
+ * GitHub callouts. Stored as `> [!NOTE]` blockquotes, so every other reader
+ * still shows a blockquote — the styling is ours, the file is portable.
+ */
+.milkdown .ProseMirror .callout {
+  margin: 18px 0;
+  padding: 12px 16px;
+  border-left: 3px solid var(--callout-accent, var(--ink-3));
+  border-radius: 0 8px 8px 0;
+  background: color-mix(in srgb, var(--callout-accent, var(--ink-3)) 7%, transparent);
+}
+
+.milkdown .ProseMirror .callout > :first-child { margin-top: 0; }
+.milkdown .ProseMirror .callout > :last-child { margin-bottom: 0; }
+
+.milkdown .ProseMirror .callout::before {
+  content: attr(data-callout);
+  display: block;
+  margin-bottom: 6px;
+  font: 600 0.72rem/1 var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--callout-accent, var(--ink-3));
+}
+
+.milkdown .ProseMirror .callout-note { --callout-accent: #4a76b8; }
+.milkdown .ProseMirror .callout-tip { --callout-accent: #4d8a57; }
+.milkdown .ProseMirror .callout-important { --callout-accent: #a3599e; }
+.milkdown .ProseMirror .callout-warning { --callout-accent: var(--accent); }
+.milkdown .ProseMirror .callout-caution { --callout-accent: #c4554d; }
+
+/* Bear exposes six highlighter choices. The colour is document state, not a
+   decoration: the mark carries data-highlight-color and serialises to the
+   readable `=={colour}text==` extension used by the editor adapter. */
+.milkdown .ProseMirror mark {
+  color: inherit;
+  background: #f6dc83;
+  border-radius: 2px;
+  padding: 0 1px;
+}
+.milkdown .ProseMirror mark[data-highlight-color='green'] { background: #bfe4bd; }
+.milkdown .ProseMirror mark[data-highlight-color='red'] { background: #f2b8b5; }
+.milkdown .ProseMirror mark[data-highlight-color='blue'] { background: #b8d8f1; }
+.milkdown .ProseMirror mark[data-highlight-color='yellow'] { background: #f6dc83; }
+.milkdown .ProseMirror mark[data-highlight-color='purple'] { background: #d8c1e8; }
+
+/*
+ * Leaving a note on a single-pane viewport.
+ *
+ * Hidden wherever the list and the document can share a row, because there the
+ * list never went away and there is nothing to go back to. It appears only in
+ * the one state where the document occupies the whole screen — which on a phone
+ * is every open note.
+ */
+.single-pane-back {
+  display: none;
+  align-items: center;
+  gap: 1px;
+  min-height: 34px;
+  margin-right: 2px;
+  padding: 0 8px 0 2px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--accent);
+  font: 500 15px/1 var(--sans);
+  cursor: pointer;
+}
+
+.single-pane-back svg {
+  width: 18px;
+  height: 18px;
+}
+
+.single-pane-back-label {
+  max-width: 34vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 620px) {
+  .titlebar.single-pane-reading .single-pane-back {
+    display: inline-flex;
+  }
+  /* Undo and Redo remain in the styles bar while editing; on a phone the space
+     they take belongs to knowing where you are and how to get back. */
+  .titlebar.single-pane-reading .left .tool {
+    display: none;
+  }
+}
+
+/* The paste-trim offer (DESIGN.md §4.2). Calm, non-modal, and ignorable:
+   the faithful paste is already on the page and costs one ⌘Z.
+   `--soft`, `--line` and `--ink-2` are this file's surface/rule/muted-text
+   tokens (tokens.css) — there is no `--surface-raised` / `--rule` /
+   `--text-muted` here, so those are what `.diagram-error`'s neighbours
+   (`.note-item:hover`, `.info-outline button:hover`) already use for the
+   same roles. */
+.page-trim-offer {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin: 0 0 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--soft);
+  font-size: 0.85rem;
+  user-select: none;
+}
+
+.page-trim-offer-label {
+  flex: 1;
+  color: var(--ink-2);
+}
+
+.page-trim-offer button {
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.page-trim-offer button:hover {
+  background: var(--line);
+}
+
+/*
+ * A figure wider than its column, and the two ways out of it.
+ *
+ * Scrolling inside the box stays — it is the quickest way to glance at the far
+ * edge — but a clipped drawing with a hard edge says nothing about what it is
+ * hiding, so the fade is the affordance. `Open figure` is the answer for
+ * actually reading one: on a phone the box is 390pt and the chart was authored
+ * at 760, and no amount of dragging inside that box makes a dense chart legible.
+ */
+.diagram-render.is-wide {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 34px), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 34px), transparent);
+}
+
+/* The fade is a hint that there is more, not a permanent veil: once you reach
+   the end there is nothing left to promise. */
+.diagram-render.is-wide.is-at-end {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+
+.diagram-expand {
+  position: absolute;
+  z-index: 3;
+  top: 6px;
+  right: 8px;
+  display: none;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font: 500 11.5px var(--sans);
+  cursor: pointer;
+}
+
+/* Only a figure that does not fit has somewhere to go. */
+.diagram.has-wide-figure .diagram-expand {
+  display: block;
+}
+
+.diagram-expand:hover {
+  color: var(--ink);
+}
+
+/* ---- the full-screen figure ---- */
+
+.figure-viewer {
+  position: fixed;
+  z-index: 200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--ink) 92%, transparent);
+  /* The browser's own pan and zoom would fight the gesture handling below. */
+  touch-action: none;
+  overscroll-behavior: contain;
+}
+
+.figure-viewer-stage {
+  /* Transformed on every gesture frame, so it must not also be laying out. */
+  will-change: transform;
+  transform-origin: center center;
+  max-width: 100vw;
+  padding: 24px;
+}
+
+.figure-viewer-stage svg {
+  display: block;
+  /*
+   * A definite width, not `auto`. The clone arrives stripped of the width the
+   * document gave it so that the screen decides instead — but an SVG with only
+   * a `viewBox` has no intrinsic size, so `auto` inside a centred grid item
+   * collapsed it to nothing. The viewBox then scales the drawing to this width
+   * and the aspect ratio follows.
+   */
+  width: calc(100vw - 48px);
+  height: auto;
+  border-radius: 10px;
+  background: var(--paper);
+}
+
+.figure-viewer-close {
+  position: absolute;
+  top: calc(14px + env(safe-area-inset-top));
+  right: 16px;
+  min-height: 36px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 500 14px var(--sans);
+  cursor: pointer;
+}
+
+.figure-viewer-hint {
+  position: absolute;
+  right: 0;
+  bottom: calc(16px + env(safe-area-inset-bottom));
+  left: 0;
+  margin: 0;
+  color: color-mix(in srgb, var(--paper) 76%, transparent);
+  font: 12px var(--sans);
+  text-align: center;
+  pointer-events: none;
+}
+
+/* A pointer has hover and a scrollbar; the hint is for a thumb. */
+@media (hover: hover) {
+  .figure-viewer-hint {
+    display: none;
+  }
+}

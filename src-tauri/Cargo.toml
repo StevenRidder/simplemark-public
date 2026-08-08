@@ -1,0 +1,59 @@
+[package]
+name = "simplemark"
+version = "0.1.0"
+description = "The beautiful living document for AI-generated Markdown"
+edition = "2021"
+rust-version = "1.77"
+publish = false
+
+# One application, not a separately versioned product (ADR-0001): this crate is
+# the operating-system adapter for the same release as the TypeScript modules.
+
+[lib]
+name = "simplemark_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-clipboard-manager = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+sha2 = "0.10"
+
+# Desktop-only capabilities. None of these three has an iOS implementation:
+# `notify` gates every backend behind a desktop `target_os`, `trash` has no
+# platform module for iOS, and a single-instance lock is meaningless where the
+# operating system already guarantees one process per app. Declaring them here
+# rather than `#[cfg]`-ing their use sites keeps the iOS build from compiling
+# code it can never link.
+[target.'cfg(not(any(target_os = "ios", target_os = "android")))'.dependencies]
+notify = "6"
+trash = "5"
+tauri-plugin-single-instance = "2"
+
+# The ubiquity container is a Foundation call with no Tauri equivalent, so iOS
+# needs the same objc2 bridge macOS already uses — a much smaller slice of it.
+[target.'cfg(target_os = "ios")'.dependencies]
+objc2 = "0.6.4"
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["NSFileManager", "NSString", "NSURL"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2 = "0.6.4"
+objc2-app-kit = { version = "0.3.2", default-features = false, features = ["NSApplication", "NSEvent", "NSMenu", "NSMenuItem", "NSResponder", "NSUserInterfaceItemIdentification", "NSButton", "NSControl", "NSImage", "NSView", "NSWindow"] }
+objc2-foundation = { version = "0.3.2", default-features = false, features = ["NSData", "NSNotification", "NSObject", "NSString", "NSUserDefaults"] }
+objc2-web-kit = { version = "0.3.2", default-features = false, features = ["WKWebView"] }
+block2 = "0.6.2"
+
+[dev-dependencies]
+tempfile = "3"
+# The accelerator parser the menubar actually uses, so the shared registry's
+# shortcut strings are checked against the real grammar rather than a
+# transcription of it. Already in the tree via tauri — this only makes it
+# nameable from a test.
+muda = "0.19"

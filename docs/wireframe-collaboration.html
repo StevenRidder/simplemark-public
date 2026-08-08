@@ -1,0 +1,629 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SimpleMark — collaboration surface wireframe</title>
+<style>
+  :root {
+    --app: #eeece7;
+    --window: #fbfaf7;
+    --paper: #fffefa;
+    --ink: #262521;
+    --soft-ink: #716e67;
+    --quiet: #a5a197;
+    --line: #e8e5de;
+    --toolbar: #f7f5f0;
+    --hover: #efede7;
+    --selection: #e7dfd1;
+    --accent: #a66a2d;
+    --accent-soft: #f6e7d2;
+    --change: #e9f0df;
+    --rail: #2f2d29;
+    --rail-ink: #d8d4cb;
+    --rail-quiet: #86817a;
+    --agent: #4a6fa5;
+    --agent-soft: #e4ecf6;
+    --agent-line: #b9cbe4;
+    --note-tint: #f6e7bd;
+    --note-line: #e3ce93;
+    --stop: #a2453a;
+    --stop-soft: #f6e3e0;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    --serif: "Iowan Old Style", "New York", Georgia, serif;
+    --mono: "SFMono-Regular", Consolas, monospace;
+    --shadow: 0 24px 76px rgba(45, 41, 33, .17), 0 2px 6px rgba(45, 41, 33, .08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --app: #171614;
+      --window: #201f1c;
+      --paper: #24231f;
+      --ink: #e6e3dc;
+      --soft-ink: #a39f96;
+      --quiet: #74706a;
+      --line: #33312c;
+      --toolbar: #26251f;
+      --hover: #2d2b26;
+      --selection: #3b352a;
+      --accent: #d19a5c;
+      --accent-soft: #3a2e1e;
+      --change: #263021;
+      --rail: #131210;
+      --rail-ink: #cbc7be;
+      --rail-quiet: #7c776f;
+      --agent: #8fb0dc;
+      --agent-soft: #1f2a38;
+      --agent-line: #3b4d66;
+      --note-tint: #4a4029;
+      --note-line: #6d5c34;
+      --stop: #d98d82;
+      --stop-soft: #37211e;
+      --shadow: 0 24px 76px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--app);
+    color: var(--ink);
+    font: 15px/1.6 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 28px 120px; }
+
+  header.page-head { margin-bottom: 12px; }
+  .eyebrow {
+    font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--quiet); font-weight: 600; margin: 0 0 10px;
+  }
+  h1 { font: 600 30px/1.25 var(--sans); margin: 0 0 10px; letter-spacing: -.015em; }
+  .standfirst { color: var(--soft-ink); max-width: 68ch; margin: 0 0 6px; }
+  .sources { color: var(--quiet); font-size: 13px; max-width: 78ch; }
+  .sources code { font-family: var(--mono); font-size: 12px; }
+
+  h2 {
+    font: 600 21px/1.3 var(--sans); margin: 64px 0 6px;
+    padding-top: 22px; border-top: 1px solid var(--line); letter-spacing: -.01em;
+  }
+  h2 .num { color: var(--quiet); font-weight: 500; margin-right: 10px; }
+  h3 { font: 600 15px/1.4 var(--sans); margin: 34px 0 10px; }
+  .lede { color: var(--soft-ink); max-width: 70ch; margin: 0 0 22px; }
+
+  .rule {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    padding: 12px 16px; margin: 22px 0; border-radius: 0 5px 5px 0;
+    font-size: 14px; max-width: 76ch;
+  }
+  .rule strong { font-weight: 600; }
+  .rule .cite { display: block; margin-top: 6px; color: var(--soft-ink); font-size: 12.5px; }
+
+  /* ---------- the window ---------- */
+  .window {
+    background: var(--window); border: 1px solid var(--line);
+    border-radius: 11px; box-shadow: var(--shadow); overflow: hidden; margin: 26px 0 10px;
+  }
+  .titlebar {
+    height: 38px; background: var(--toolbar); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; gap: 8px; padding: 0 13px;
+  }
+  .lights { display: flex; gap: 7px; }
+  .lights i { width: 11px; height: 11px; border-radius: 50%; background: var(--quiet); opacity: .5; display: block; }
+  .titlebar .doc-name { font-size: 12.5px; color: var(--soft-ink); margin-left: 10px; }
+  .titlebar .save-state { margin-left: auto; font-size: 11.5px; color: var(--quiet); }
+
+  .panes { display: grid; grid-template-columns: 172px 232px 1fr; min-height: 430px; }
+  @media (max-width: 860px) { .panes { grid-template-columns: 1fr; } }
+
+  /* library */
+  .library { background: var(--rail); color: var(--rail-ink); padding: 14px 0 18px; font-size: 13px; }
+  .library .group { padding: 0 14px; }
+  .library .group-label {
+    font-size: 10px; letter-spacing: .11em; text-transform: uppercase;
+    color: var(--rail-quiet); margin: 16px 0 7px; padding: 0 14px; font-weight: 600;
+  }
+  .lib-row {
+    display: flex; align-items: center; gap: 8px; padding: 5px 14px;
+    color: var(--rail-ink); border-radius: 5px; margin: 0 6px;
+  }
+  .lib-row.on { background: rgba(255,255,255,.09); }
+  .lib-row.off { color: var(--rail-quiet); }
+  .lib-row .count { margin-left: auto; font-size: 11px; color: var(--rail-quiet); font-variant-numeric: tabular-nums; }
+  .lib-row .ic { width: 13px; height: 13px; border: 1.4px solid currentColor; border-radius: 3px; opacity: .62; flex: none; }
+
+  /* notes */
+  .notes { border-right: 1px solid var(--line); background: var(--window); }
+  .notes-head {
+    display: flex; align-items: center; gap: 8px; padding: 11px 13px;
+    border-bottom: 1px solid var(--line); font-size: 12.5px; color: var(--soft-ink);
+  }
+  .notes-head .grow { flex: 1; font-weight: 500; color: var(--ink); }
+  .chip-btn {
+    border: 1px solid var(--line); border-radius: 5px; padding: 2px 7px;
+    font-size: 11px; color: var(--soft-ink); background: var(--toolbar);
+  }
+  .note-row { padding: 10px 13px; border-bottom: 1px solid var(--line); position: relative; }
+  .note-row.on { background: var(--selection); }
+  .note-row .t { font-size: 13px; font-weight: 500; margin-bottom: 2px; display: flex; align-items: center; gap: 6px; }
+  .note-row .p { font-size: 11.5px; color: var(--quiet); line-height: 1.45;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .note-row .m { font-size: 10.5px; color: var(--quiet); margin-top: 5px; }
+  .pin { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex: none; }
+
+  .agent-dot {
+    width: 7px; height: 7px; border-radius: 50%; background: var(--agent);
+    flex: none; box-shadow: 0 0 0 2.5px var(--agent-soft);
+  }
+  .note-row .agent-line {
+    font-size: 10.5px; color: var(--agent); margin-top: 5px;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  /* document */
+  .doc { background: var(--paper); padding: 26px 34px 30px; font-family: var(--serif); }
+  .doc h4 { font: 600 21px/1.3 var(--serif); margin: 0 0 4px; letter-spacing: -.01em; }
+  .doc .sub { font-family: var(--sans); font-size: 11px; color: var(--quiet); margin-bottom: 18px; }
+  .doc p { font-size: 14.5px; line-height: 1.72; margin: 0 0 13px; color: var(--ink); }
+
+  .tinted { background: var(--note-tint); border-bottom: 2px solid var(--note-line); border-radius: 2px; padding: 0 1px; }
+  .agent-block {
+    background: var(--agent-soft); border-left: 3px solid var(--agent);
+    padding: 10px 13px; margin: 6px 0 14px; border-radius: 0 5px 5px 0;
+  }
+  .agent-block .caret { display: inline-block; width: 2px; height: 15px; background: var(--agent);
+    vertical-align: -3px; margin-left: 2px; }
+
+  .margin-chip {
+    display: inline-block; font-family: var(--sans);
+    font-size: 10px; color: var(--agent); background: var(--agent-soft);
+    border: 1px solid var(--agent-line); border-radius: 20px; padding: 1px 7px;
+    white-space: nowrap; margin-bottom: 5px;
+  }
+  .has-margin { border-left: 2px solid var(--agent-line); padding-left: 11px; margin-left: -13px; }
+
+  .statusline {
+    font-family: var(--sans); font-size: 11.5px; color: var(--agent);
+    display: flex; align-items: center; gap: 7px; margin-top: 20px;
+    padding-top: 11px; border-top: 1px solid var(--line);
+  }
+  .statusline .spacer { flex: 1; }
+  .statusline .ctl { color: var(--soft-ink); border: 1px solid var(--line);
+    border-radius: 4px; padding: 1px 7px; }
+
+  /* callouts */
+  .callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(232px, 1fr)); gap: 12px; margin: 16px 0 4px; }
+  .callout {
+    border: 1px solid var(--line); border-radius: 7px; padding: 11px 13px;
+    background: var(--window); font-size: 12.5px; line-height: 1.5;
+  }
+  .callout .k {
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--quiet); font-weight: 600; margin-bottom: 5px;
+  }
+  .callout.absent { border-style: dashed; }
+  .callout.absent .k { color: var(--stop); }
+  .callout strong { font-weight: 600; }
+  .callout .cite { display: block; margin-top: 6px; color: var(--quiet); font-size: 11px; }
+
+  /* storyboard */
+  .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); gap: 14px; margin: 22px 0; }
+  .frame { border: 1px solid var(--line); border-radius: 9px; background: var(--window); overflow: hidden; }
+  .frame-head {
+    padding: 8px 12px; border-bottom: 1px solid var(--line); background: var(--toolbar);
+    font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--soft-ink); font-weight: 600;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .frame-head .n { color: var(--quiet); font-weight: 500; }
+  .frame-body { padding: 13px; font-size: 12.5px; line-height: 1.6; }
+  .frame-body .doc-mini { font-family: var(--serif); font-size: 12.5px; color: var(--soft-ink);
+    background: var(--paper); border: 1px solid var(--line); border-radius: 5px; padding: 9px 11px; margin-bottom: 10px; }
+  .frame-body .said { color: var(--soft-ink); margin: 0 0 7px; }
+  .frame-body .said b { color: var(--ink); font-weight: 600; }
+  .state-pill {
+    display: inline-flex; align-items: center; gap: 5px; font-family: var(--sans);
+    font-size: 10.5px; border-radius: 20px; padding: 2px 8px; border: 1px solid var(--agent-line);
+    background: var(--agent-soft); color: var(--agent); margin-left: auto;
+  }
+  .state-pill.stopped { border-color: var(--stop); background: var(--stop-soft); color: var(--stop); }
+  .fence {
+    font-family: var(--mono); font-size: 11px; color: var(--soft-ink);
+    background: var(--toolbar); border: 1px solid var(--line); border-radius: 5px;
+    padding: 7px 9px; margin-top: 9px; white-space: pre-wrap;
+  }
+  .fence .kill { color: var(--stop); }
+  .fence .ok { color: var(--accent); }
+
+  /* conversation */
+  .thread {
+    border: 1px solid var(--line); border-radius: 9px; background: var(--window);
+    overflow: hidden; margin: 16px 0;
+  }
+  .thread-head {
+    display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+    border-bottom: 1px solid var(--line); background: var(--toolbar); font-size: 11.5px; color: var(--soft-ink);
+  }
+  .thread-head .anchored { margin-left: auto; color: var(--quiet); font-size: 11px; }
+  .thread-body { padding: 12px; font-size: 13px; }
+  .msg { display: flex; gap: 9px; margin-bottom: 9px; }
+  .who { flex: none; width: 44px; font-size: 11px; font-weight: 600; color: var(--soft-ink); padding-top: 1px; }
+  .who.a { color: var(--agent); }
+  .composer {
+    border-top: 1px solid var(--line); padding: 10px 12px; display: flex; align-items: center; gap: 8px;
+    font-size: 12px; color: var(--quiet); background: var(--toolbar);
+  }
+  .mode {
+    border: 1px solid var(--line); border-radius: 5px; padding: 3px 9px; font-size: 11.5px;
+    color: var(--soft-ink); background: var(--window);
+  }
+  .mode.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+  .mode.ctl { border-color: var(--stop); color: var(--stop); background: var(--stop-soft); font-weight: 600; }
+
+  table.matrix { border-collapse: collapse; width: 100%; font-size: 13px; margin: 18px 0; }
+  table.matrix th, table.matrix td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+  table.matrix th { background: var(--toolbar); font-weight: 600; font-size: 12px; }
+  table.matrix td.no { color: var(--stop); }
+  table.matrix td.yes { color: var(--accent); }
+  .scroll { overflow-x: auto; }
+
+  .caption { font-size: 12px; color: var(--quiet); margin: 8px 0 0; max-width: 76ch; }
+  .caption code { font-family: var(--mono); font-size: 11.5px; }
+  code.inline { font-family: var(--mono); font-size: 12.5px; background: var(--toolbar);
+    border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--soft-ink); margin: 14px 0 0; }
+  .legend span { display: flex; align-items: center; gap: 6px; }
+  .sw { width: 22px; height: 11px; border-radius: 3px; display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="page-head">
+  <p class="eyebrow">SimpleMark · design wireframe</p>
+  <h1>Where collaboration appears — and where it never does</h1>
+  <p class="standfirst">
+    The sidebars are scoped to <strong>notes</strong>. Collaboration has no rail, no pane and no panel.
+    It appears in five places, four of them inside the document, and one quiet marker on a note row.
+  </p>
+  <p class="sources">
+    Derived from <code>DESIGN.md</code> §6 &amp; §10.1, <code>NATIVE-WORKSPACE.md</code>,
+    <code>COLLABORATION.md</code> §5–§6, <code>MCP-SERVER.md</code> §10,
+    <code>SWITCHBOARD-KERNEL.md</code> §2, ADR-0002/0004/0005/0006, and the anchored-notes design.
+    Companion to <code>wireframe.html</code> and <code>wireframe-bear.html</code>.
+  </p>
+</header>
+
+<h2><span class="num">1</span>The shell — sidebars are note scope, nothing else</h2>
+<p class="lede">
+  Three panes. Left scopes <em>which notes</em>. Middle chooses <em>one note</em>. Right is the document.
+  No pane in this window is about an agent.
+</p>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <span class="doc-name">architecture-review.md</span>
+    <span class="save-state">Saved · 14:22</span>
+  </div>
+  <div class="panes">
+
+    <!-- LIBRARY -->
+    <div class="library">
+      <div class="group-label">Library</div>
+      <div class="lib-row on"><span class="ic"></span>Recent Notes<span class="count">12</span></div>
+      <div class="lib-row off"><span class="ic"></span>Untagged</div>
+      <div class="lib-row off"><span class="ic"></span>Todo</div>
+      <div class="lib-row off"><span class="ic"></span>Today</div>
+      <div class="lib-row"><span class="ic"></span>Pinned<span class="count">3</span></div>
+      <div class="lib-row off"><span class="ic"></span>Trash</div>
+      <div class="group-label">Folders</div>
+      <div class="lib-row"><span class="ic"></span>project-notes<span class="count">28</span></div>
+      <div class="lib-row"><span class="ic"></span>research<span class="count">9</span></div>
+      <div class="lib-row off"><span class="ic"></span>+ Add Folder</div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="notes">
+      <div class="notes-head">
+        <span class="grow">Recent Notes ▾</span>
+        <span class="chip-btn">Search</span>
+        <span class="chip-btn">New</span>
+      </div>
+      <div class="note-row on">
+        <div class="t"><span class="pin"></span>Architecture review</div>
+        <div class="p">The transport question is still open. Two candidates survive the first pass…</div>
+        <div class="m">14:22 · 4 min read</div>
+      </div>
+      <div class="note-row">
+        <div class="t">Q3 planning</div>
+        <div class="p">Three deliverables, one of which is a spike and should be named as one.</div>
+        <div class="m">Yesterday</div>
+      </div>
+      <div class="note-row">
+        <div class="t"><span class="agent-dot"></span>Vendor comparison</div>
+        <div class="p">Pricing table rebuilt from the three quotes, with per-seat maths normalised.</div>
+        <div class="agent-line"><span class="agent-dot"></span>Codex edited · 2 changes</div>
+      </div>
+      <div class="note-row">
+        <div class="t">Meeting notes — Tuesday</div>
+        <div class="p">Customer wants the export path clarified before they commit to the pilot.</div>
+        <div class="m">Mon</div>
+      </div>
+    </div>
+
+    <!-- DOCUMENT -->
+    <div class="doc">
+      <h4>Architecture review</h4>
+      <div class="sub">architecture-review.md · project-notes</div>
+      <p>
+        The transport question is still open. Two candidates survive the first pass, and
+        <span class="tinted">the difference between them is operational rather than theoretical</span>
+        — which is the part worth deciding in a room.
+      </p>
+      <span class="margin-chip">Codex · you</span>
+      <p class="has-margin">
+        A single authority orders and rebases native steps, so every change stays inspectable.
+        The masterless alternative buys offline symmetry nobody has asked for yet.
+      </p>
+      <div class="statusline">
+        <span class="agent-dot"></span>
+        <span>Codex is drafting a diagram…</span>
+        <span class="spacer"></span>
+        <span class="ctl">Follow</span>
+        <span class="ctl">Pause agent edits</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="legend">
+  <span><i class="sw" style="background:var(--note-tint);border:1px solid var(--note-line)"></i> anchored note (human, shipping)</span>
+  <span><i class="sw" style="background:var(--agent-soft);border:1px solid var(--agent-line)"></i> agent presence (later capability)</span>
+  <span><i class="sw" style="background:var(--selection)"></i> selected note</span>
+</div>
+
+<h3>What each pane is allowed to be</h3>
+<div class="callouts">
+  <div class="callout">
+    <div class="k">Left · Library</div>
+    <strong>Note scope only.</strong> Recent Notes, Untagged, Todo, Today, Pinned, Trash, Folders.
+    Rebuildable views over the Markdown folder — never a second note store.
+    <span class="cite">NATIVE-WORKSPACE.md · Library pane</span>
+  </div>
+  <div class="callout">
+    <div class="k">Middle · Notes</div>
+    <strong>One note index.</strong> Title, one-line preview, modified time, quiet pin.
+    Header is exactly three things: <code class="inline">[Recent Notes ▾] [Search] [New Note]</code>.
+    <span class="cite">DESIGN.md §6 · NATIVE-WORKSPACE.md</span>
+  </div>
+  <div class="callout">
+    <div class="k">Right · Document</div>
+    <strong>The primary surface.</strong> Rendered, directly editable Markdown. Everything
+    collaborative happens here or floats over here — never beside it permanently.
+    <span class="cite">DESIGN.md §6</span>
+  </div>
+  <div class="callout absent">
+    <div class="k">Not present, by rule</div>
+    <strong>No agent pane, activity sidebar, model picker or chat panel.</strong>
+    No permanent activity, chat, agent or inspector rail.
+    <span class="cite">DESIGN.md §10.1 · NATIVE-WORKSPACE.md</span>
+  </div>
+</div>
+
+<div class="rule">
+  <strong>The one sidebar affordance collaboration ever gets</strong> is the marker on a note row.
+  An agent may open and edit a note nobody has open — opening starts an authority, never a window.
+  Nothing appears, nothing scrolls, nothing takes focus; you see it in the note list when you look.
+  <span class="cite">MCP-SERVER.md §10.2 — gated per vault by <code>agentMayOpenNotes: ask | allow | deny</code>, default <code>ask</code></span>
+</div>
+
+<h2><span class="num">2</span>Where agent state actually lives</h2>
+<p class="lede">Five surfaces. Four are in the document, one is the note row above. None is resident chrome.</p>
+
+<div class="scroll">
+<table class="matrix">
+  <thead>
+    <tr><th style="width:23%">Surface</th><th style="width:41%">What it shows</th><th>Rule that governs it</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Note row marker</strong></td>
+      <td>A dot and <em>“Codex edited · 2 changes”</em> on notes an agent touched while you were elsewhere.</td>
+      <td>Opening starts an authority, not a window <span style="color:var(--quiet)">· MCP §10.2</span></td>
+    </tr>
+    <tr>
+      <td><strong>Status line</strong></td>
+      <td>One compact line: <em>“Codex is drafting a diagram…”</em> plus Follow and Pause agent edits.</td>
+      <td>Never steal the viewport; Follow is opt-in <span style="color:var(--quiet)">· COLLAB §6.4</span></td>
+    </tr>
+    <tr>
+      <td><strong>Margin chips</strong></td>
+      <td>Every participant who touched a block, most recent first. Never collapsed to last writer.</td>
+      <td>Provenance has several honest answers <span style="color:var(--quiet)">· COLLAB §5.7</span></td>
+    </tr>
+    <tr>
+      <td><strong>Passage conversation</strong></td>
+      <td>Opens <em>at the passage</em>, not as a global chatbot. Two composer modes, never conflated.</td>
+      <td>Chat is ephemeral; the document is durable <span style="color:var(--quiet)">· COLLAB §1.1</span></td>
+    </tr>
+    <tr>
+      <td><strong>Activity timeline</strong></td>
+      <td>Named transactions you can inspect, jump to, or revert. Opened deliberately.</td>
+      <td>Revert at one named transaction <span style="color:var(--quiet)">· MCP §11</span></td>
+    </tr>
+    <tr>
+      <td class="no"><strong>A rail</strong></td>
+      <td class="no">— never exists for agents.</td>
+      <td class="no">DESIGN §10.1 · NATIVE-WORKSPACE</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="num">3</span>How an agent makes an edit — the four states</h2>
+<p class="lede">
+  Manual invocation, one visible scope, one coherent transaction, and an interrupt that is
+  <em>binding</em> rather than polite. The fence is the machinery that makes the last one true.
+</p>
+
+<div class="board">
+
+  <div class="frame">
+    <div class="frame-head"><span class="n">1</span>Invoke <span class="state-pill">scope granted</span></div>
+    <div class="frame-body">
+      <div class="doc-mini">…the difference between them is <span class="tinted">operational rather than theoretical</span>…</div>
+      <p class="said"><b>You</b> select the passage → <em>Ask agent → Turn this into a chart</em></p>
+      <p class="said" style="color:var(--quiet)">Nothing selected and nothing invoked means nothing happens. There is no ambient agent activity.</p>
+      <div class="fence">run 17 · gen 3
+scope = §Transport  <span class="ok">(authority-issued, opaque)</span></div>
+    </div>
+  </div>
+
+  <div class="frame">
+    <div class="frame-head"><span class="n">2</span>Write <span class="state-pill">writing</span></div>
+    <div class="frame-body">
+      <div class="doc-mini">
+        <div class="agent-block">A three-step comparison, ordered by operational cost<span class="caret"></span></div>
+      </div>
+      <p class="said">Streams by <b>coherent unit</b> — a heading, then a paragraph, then a diagram. Never character by character.</p>
+      <p class="said" style="color:var(--quiet)">Will not enter a block under your active cursor. Your page does not move.</p>
+      <div class="fence">one named transaction:
+"Added transport comparison"</div>
+    </div>
+  </div>
+
+  <div class="frame">
+    <div class="frame-head"><span class="n">3</span>Redirect <span class="state-pill">superseded</span></div>
+    <div class="frame-body">
+      <p class="said"><b>You</b> → “Stop. Optimise for local-first and iPad.”</p>
+      <p class="said" style="color:var(--quiet)">Travels the out-of-band control channel, not through document operations — a busy agent would not notice a comment until it finished the table.</p>
+      <div class="fence">gen 3 → <span class="kill">4</span>
+run 17 fenced · replacement run starts
+in the same visible scope</div>
+    </div>
+  </div>
+
+  <div class="frame">
+    <div class="frame-head"><span class="n">4</span>Late write <span class="state-pill stopped">refused</span></div>
+    <div class="frame-body">
+      <p class="said">Run 17 finishes its table three seconds later and tries to land it.</p>
+      <div class="fence"><span class="kill">REFUSED — not merged</span>
+claimed gen 3 ≠ current gen 4</div>
+      <p class="said" style="margin-top:9px;color:var(--quiet)">
+        Without this, the edit lands <em>after</em> you said stop and the stop looks broken.
+        Ported from Switchboard’s <code class="inline">execution_liveness.py</code> — ~80 lines, no dependencies.
+      </p>
+    </div>
+  </div>
+
+</div>
+<p class="caption">
+  A stop is not a message. Every operation carries a run id and a generation;
+  interrupting bumps the generation and a superseded generation is refused, not merged.
+  <code>SWITCHBOARD-KERNEL.md</code> §2 calls this the one piece of machinery worth building
+  before the first agent edit lands.
+</p>
+
+<h2><span class="num">4</span>The conversation — two kinds, one surface</h2>
+<p class="lede">
+  The same anchored thread serves humans and agents. What separates them is the composer mode,
+  and the two must never be conflated: one is communication, one is control.
+</p>
+
+<h3>Shipping first — anchored note, no AI involved</h3>
+<div class="thread">
+  <div class="thread-head">
+    <span>Note</span>
+    <span class="anchored">anchored to “operational rather than theoretical”</span>
+  </div>
+  <div class="thread-body">
+    <div class="msg"><span class="who">You</span><span>Split this by region before the customer call?</span></div>
+  </div>
+  <div class="composer">
+    <span class="mode on">Resolve</span>
+    <span class="mode">Keep as note</span>
+    <span style="margin-left:auto">⌘⇧M · rail appears only when something is unresolved</span>
+  </div>
+</div>
+<p class="caption">
+  The human half of <code>COLLABORATION.md</code> §4’s Conversation layer, minus every participant.
+  Note bodies never enter the <code>.md</code>. The rail is <strong>conditional</strong> — no open
+  threads, no rail — which is what keeps it inside the “no permanent rail” rule.
+</p>
+
+<h3>Later — the same thread with an agent in it</h3>
+<div class="thread">
+  <div class="thread-head">
+    <span>Passage conversation</span>
+    <span class="anchored">live · anchored here</span>
+  </div>
+  <div class="thread-body">
+    <div class="msg"><span class="who a">Codex</span><span>I’m turning this into a three-step system diagram.</span></div>
+    <div class="msg"><span class="who">You</span><span>Keep Markdown at the centre. Hide the sync machinery.</span></div>
+  </div>
+  <div class="composer">
+    <span class="mode ctl">Redirect now</span>
+    <span class="mode">Leave note</span>
+    <span style="margin-left:auto">To Codex …</span>
+  </div>
+</div>
+
+<div class="rule">
+  <strong>Redirect now</strong> is control: it fences the running generation and starts a replacement.
+  <strong>Leave note</strong> is communication: it appends an anchored message and interrupts nobody.
+  A chat message that says “stop” is still only a message — the control is what fences a generation.
+  <span class="cite">COLLABORATION.md §1.1 &amp; §5.4 · SWITCHBOARD-KERNEL.md §1 “Communication ≠ control”</span>
+</div>
+
+<h2><span class="num">5</span>What an agent may do, by who is present</h2>
+<p class="lede">
+  The constraint keys on <em>presence</em>, because it exists to protect attention — which is also
+  what makes agent-opened notes safe.
+</p>
+
+<div class="scroll">
+<table class="matrix">
+  <thead><tr><th style="width:34%">Note state</th><th>What an agent may do</th></tr></thead>
+  <tbody>
+    <tr><td>You are editing a paragraph</td><td>Does not enter it. Waits, or works in its own scope.</td></tr>
+    <tr><td>You select and invoke</td><td>May edit within that scope, live, with its cursor visible.</td></tr>
+    <tr><td>Two humans active in a section</td><td>Offers a compact suggestion, or works elsewhere.</td></tr>
+    <tr><td>No human participating</td><td>May work document-wide inline — journaled, attributed, revertible, budgeted.</td></tr>
+    <tr><td>Document-wide work, humans present</td><td class="no">Deferred to a quiet review item. Never an unsolicited inline edit.</td></tr>
+    <tr><td>Nothing granted, nothing asked</td><td class="no">Nothing happens.</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="caption">
+  From the CHI 2026 study behind <code>COLLABORATION.md</code> §5.7: autonomous document-wide
+  intervention produced overload, and ~23% of participants did not feel in control of the text.
+  Humans never need a lease to type — fences and scopes constrain only an agent’s right to commit.
+</p>
+
+<h2><span class="num">6</span>The sequence this surface is gated behind</h2>
+<div class="scroll">
+<table class="matrix">
+  <thead><tr><th style="width:16%">Phase</th><th style="width:38%">Deliverable</th><th>State</th></tr></thead>
+  <tbody>
+    <tr><td>Now</td><td>Rendered document, reader, portable commands, releases</td><td class="yes">Built / in review</td></tr>
+    <tr><td>Now</td><td>Anchored notes — human half of the Conversation layer</td><td>Specced &amp; planned, unmerged branch</td></tr>
+    <tr><td>Gate</td><td>Reader one-day trial <span style="color:var(--quiet)">(POC.md)</span></td><td class="no">Not on the board</td></tr>
+    <tr><td>Step 3</td><td>Local <code class="inline">DocumentSession</code> + one scoped agent transaction</td><td>Proposed, not started</td></tr>
+    <tr><td>Step 4</td><td>One-day agent trial → live-edit, suggest-first, or stop</td><td>Proposed, not started</td></tr>
+    <tr><td>Step 5</td><td>Two-client authority spike — step authority before any CRDT</td><td>Parked behind Step 4</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="caption">
+  Everything in sections 2–5 above is a <strong>later capability</strong>. Under ADR-0005 the first
+  product proof contains no agent participant, MCP requirement, room, chat or activity feed —
+  which is why none of it has a permanent home in section 1’s window.
+</p>
+
+</div>
+</body>
+</html>

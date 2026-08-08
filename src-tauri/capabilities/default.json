@@ -1,0 +1,17 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "The main window may open a file picker, move or resize its native window, and call SimpleMark's audited note and workspace commands — including reading a data file a chart names, resolved against the open note by the same rules a Markdown link obeys, and — only when the user has explicitly clicked \"Fix it\" on a broken diagram with an API key configured in Settings — an authenticated chat-completion request to the endpoint that key belongs to. No general filesystem, shell, or unscoped network permission is granted: every other capability goes through this crate's narrow commands, and network access is limited to that one explicit, user-initiated, user-configured call and to downloading the images a pasted article references, which is bounded to http and https, to public addresses, to image responses, and to a size ceiling (ADR-0008).",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "core:window:allow-start-dragging",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-set-position",
+    "core:window:allow-set-size",
+    "core:window:allow-maximize",
+    "dialog:allow-open",
+    "dialog:allow-save",
+    "clipboard-manager:allow-write-text"
+  ]
+}

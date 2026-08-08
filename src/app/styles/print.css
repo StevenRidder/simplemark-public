@@ -1,0 +1,226 @@
+/*
+ * Paper (APP-21).
+ *
+ * Print is an operating-system service, not an export feature: File > Print and
+ * Cmd+P hand the live page to the OS, and this stylesheet is the entire
+ * definition of what comes out. Both shells load it, so a printout does not
+ * depend on which one you opened.
+ *
+ * The rule is the same one the product runs on — the document is the thing.
+ * Every pane, bar, popover, and reader affordance is workspace, not document,
+ * so none of it reaches paper. What remains is the rendered document, dark on
+ * white, laid out for a sheet instead of a scroller.
+ *
+ * This file must load after app.css. It overrides on-screen layout at equal
+ * specificity and wins on order, which keeps the print rules readable instead
+ * of turning them into a wall of `!important`.
+ */
+
+@media print {
+  /*
+   * Margins live here rather than on .page. WebKit paginates against the page
+   * box, so a padded element would indent the first sheet and leave the rest
+   * flush against the edge.
+   */
+  @page {
+    margin: 16mm;
+  }
+
+  /*
+   * Paper is white, whatever the screen was. Night theme on a sheet is a black
+   * rectangle that empties a cartridge, and tan's warmth is a screen comfort
+   * that reads as a printer fault. These are the `white` reader theme's own
+   * values, so the printout is a palette SimpleMark already ships rather than a
+   * fourth one invented here.
+   *
+   * The attribute selector matches the specificity of :root[data-reader-theme]
+   * in tokens.css so an explicit on-screen choice does not outrank paper.
+   */
+  :root,
+  :root[data-reader-theme] {
+    color-scheme: light;
+    --canvas: #ffffff;
+    --paper: #ffffff;
+    --chrome: #ffffff;
+    --ink: #1a1a1a;
+    --ink-2: #444444;
+    --ink-3: #666666;
+    --line: #cccccc;
+    --soft: #f2f2f2;
+    --accent: #8a5a1f;
+    --accent-soft: #f6efe2;
+    --shadow: none;
+
+    /*
+     * Face and column stay the reader's; scale does not. On screen the size
+     * step is a comfort control, but 18px body text at a large multiplier turns
+     * a two-page note into twenty. 0.8 puts body copy near 11pt, the size a
+     * printed document is expected to be.
+     *
+     * `!important` is load-bearing, not defensive. The composition root applies
+     * reader preferences with `root.style.setProperty`, so these arrive as
+     * inline declarations, and an inline declaration outranks any normal rule
+     * however specific. Important author declarations are the one thing that
+     * outranks it — the palette above needs no such help because the reader
+     * theme is an attribute, not an inline style.
+     */
+    --reader-scale: 0.8 !important;
+    --reader-width: 100% !important;
+  }
+
+  html,
+  body {
+    height: auto;
+    overflow: visible;
+    background: #ffffff;
+  }
+
+  /*
+   * Workspace, not document. The library, the note index, the title bar, the
+   * styles palette, find, and every popover describe how you are reading rather
+   * than what you are reading.
+   */
+  .titlebar,
+  .styles-bar,
+  .find-bar,
+  .workspace-folders,
+  .workspace-notes,
+  .contents-popover,
+  .format-popover,
+  .notes-menu,
+  .note-context-menu,
+  .table-controls,
+  .continue-writing,
+  .document-scroll-track {
+    display: none;
+  }
+
+  /*
+   * Reader affordances that only mean something to a pointer: the block drag
+   * gutter, the fold chevron, the diagram's hover label and source editor.
+   *
+   * The drag affordance lives on `::after`; a callout's type label — NOTE,
+   * WARNING — lives on `::before`. Hiding only the former keeps the label on
+   * paper because it is document meaning, not reader chrome.
+   */
+  .milkdown .ProseMirror > *::after,
+  .milkdown .ProseMirror .sm-fold-chevron,
+  .diagram-label,
+  .diagram-source-sheet,
+  .diagram-error-actions,
+  .diagram-chips {
+    display: none;
+  }
+
+  /*
+   * Unwrap every scroll container between the sheet and the text.
+   *
+   * This is the load-bearing rule. On screen the document lives inside nested
+   * fixed-height, overflow:auto boxes; printed, such a box emits only the slice
+   * that was on screen and the rest of the note silently never reaches paper.
+   * Height and overflow have to be released together — releasing one alone
+   * still clips.
+   */
+  .stage,
+  .window,
+  .workspace-body,
+  .document-surface,
+  section.editor,
+  .page {
+    display: block;
+    width: auto;
+    max-width: none;
+    height: auto;
+    min-height: 0;
+    max-height: none;
+    overflow: visible;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .page {
+    width: 100%;
+  }
+
+  /* The 26px gutter exists to catch a drag. Paper has no pointer. */
+  .milkdown .ProseMirror {
+    padding-left: 0;
+  }
+
+  /*
+   * A folded section still prints. Folding is a reading convenience, and a
+   * sheet that quietly omits the part that happened to be collapsed is the kind
+   * of loss nobody notices until the paper is the only copy left.
+   */
+  .milkdown .ProseMirror .sm-fold-hidden {
+    display: revert;
+  }
+
+  /* Keep a heading with the text it introduces. */
+  .milkdown .ProseMirror h1,
+  .milkdown .ProseMirror h2,
+  .milkdown .ProseMirror h3,
+  .milkdown .ProseMirror h4,
+  .milkdown .ProseMirror h5,
+  .milkdown .ProseMirror h6 {
+    break-after: avoid;
+    break-inside: avoid;
+  }
+
+  /* No single stranded line at the top or bottom of a sheet. */
+  .milkdown .ProseMirror p,
+  .milkdown .ProseMirror li {
+    orphans: 3;
+    widows: 3;
+  }
+
+  /*
+   * Blocks that are one object to a reader. Half a diagram or a code fence
+   * split across the fold is worse than a short page.
+   */
+  .milkdown .ProseMirror pre,
+  .milkdown .ProseMirror blockquote,
+  .milkdown .ProseMirror .callout,
+  .milkdown .ProseMirror .asset-image,
+  .milkdown .ProseMirror tr,
+  .diagram,
+  .diagram-render {
+    break-inside: avoid;
+  }
+
+  /*
+   * Code scrolls sideways on screen; on paper an overflowing line is simply
+   * gone. Wrapping is the only honest option, and long unbroken tokens — URLs,
+   * hashes, base64 — have to be allowed to break mid-token to make it work.
+   */
+  .milkdown .ProseMirror pre {
+    overflow: visible;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+
+  .milkdown .ProseMirror pre code {
+    white-space: inherit;
+  }
+
+  /* Nothing may exceed the sheet. */
+  .milkdown .ProseMirror img,
+  .milkdown .ProseMirror svg,
+  .diagram-render svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* A table crossing the fold repeats its header rather than losing it. */
+  .milkdown .ProseMirror table {
+    width: 100%;
+  }
+
+  .milkdown .ProseMirror thead {
+    display: table-header-group;
+  }
+}

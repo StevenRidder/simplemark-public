@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark Midnight</title>
+  <desc id="desc">An ivory document with an amber living line and compact Markdown badge on a midnight tile.</desc>
+  <defs>
+    <radialGradient id="tile" cx="50%" cy="32%" r="82%">
+      <stop stop-color="#2B2B2B"/>
+      <stop offset="1" stop-color="#111212"/>
+    </radialGradient>
+    <linearGradient id="amber" x1="170" y1="520" x2="520" y2="850" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F0AE42"/>
+      <stop offset="1" stop-color="#D38320"/>
+    </linearGradient>
+    <filter id="badge-shadow" x="-35%" y="-35%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity=".45"/>
+    </filter>
+  </defs>
+  <rect x="60" y="60" width="904" height="904" rx="206" fill="url(#tile)"/>
+  <rect x="62" y="62" width="900" height="900" rx="204" fill="none" stroke="#373737" stroke-width="6"/>
+  <g fill="none" stroke="#FFF7EA" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M346 176h300l142 142v436c0 42-34 76-76 76H346c-42 0-76-34-76-76V252c0-42 34-76 76-76Z" stroke-width="48"/>
+    <path d="M646 176v108c0 19 15 34 34 34h108" stroke-width="48"/>
+    <path d="M396 430h260M396 586h260" stroke-width="34"/>
+  </g>
+  <path d="M396 508h260" fill="none" stroke="#F0A52E" stroke-linecap="round" stroke-width="34"/>
+  <g filter="url(#badge-shadow)">
+    <rect x="170" y="640" width="270" height="184" rx="48" fill="url(#amber)"/>
+  </g>
+  <g fill="none" stroke="#FFF8EC" stroke-linecap="round" stroke-linejoin="round" stroke-width="28">
+    <path d="M205 783v-94l52 57 52-57v94"/>
+    <path d="M375 690v84"/>
+    <path d="m344 746 31 31 31-31"/>
+  </g>
+</svg>

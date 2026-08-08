@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark Original</title>
+  <desc id="desc">A charcoal document with a warm amber Markdown badge.</desc>
+  <defs>
+    <linearGradient id="tile" x1="140" y1="90" x2="860" y2="940" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFEFA"/>
+      <stop offset="1" stop-color="#F3EFE4"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="245" y1="610" x2="530" y2="842" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E5A144"/>
+      <stop offset="1" stop-color="#C47720"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="170%">
+      <feDropShadow dx="0" dy="18" stdDeviation="20" flood-color="#38200A" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect x="60" y="60" width="904" height="904" rx="206" fill="url(#tile)"/>
+  <rect x="62" y="62" width="900" height="900" rx="204" fill="none" stroke="#DED8CA" stroke-width="6"/>
+  <g fill="none" stroke="#242321" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M350 205h280l148 148v390c0 42-34 76-76 76H350c-42 0-76-34-76-76V281c0-42 34-76 76-76Z" stroke-width="52"/>
+    <path d="M630 205v116c0 18 14 32 32 32h116" stroke-width="52"/>
+    <path d="M430 430h220M430 508h220M430 586h152" stroke-width="40"/>
+  </g>
+  <g filter="url(#shadow)">
+    <rect x="190" y="590" width="390" height="270" rx="68" fill="url(#badge)"/>
+    <rect x="194" y="594" width="382" height="262" rx="64" fill="none" stroke="#EAB15B" stroke-width="7"/>
+  </g>
+  <g fill="none" stroke="#FFF8EC" stroke-linecap="round" stroke-linejoin="round" stroke-width="36">
+    <path d="M245 789V655l74 82 74-82v134"/>
+    <path d="M497 655v122"/>
+    <path d="m449 736 48 48 48-48"/>
+  </g>
+</svg>

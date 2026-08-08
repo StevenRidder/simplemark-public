@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 120" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark portable asset</title>
+  <desc id="desc">A small teal document card used to verify a relative Markdown image reference.</desc>
+  <rect width="320" height="120" rx="18" fill="#e7f4f1"/>
+  <path d="M94 27h91l41 41v25a11 11 0 0 1-11 11H105a11 11 0 0 1-11-11V38a11 11 0 0 1 11-11Z" fill="#176c63"/>
+  <path d="M185 27v30a11 11 0 0 0 11 11h30" fill="#62b7aa"/>
+  <path d="M121 74h78M121 87h57" stroke="#e7f4f1" stroke-linecap="round" stroke-width="7"/>
+</svg>

@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark Movable Blocks</title>
+  <desc id="desc">A living document made of movable amber and charcoal blocks with a Markdown badge.</desc>
+  <defs>
+    <linearGradient id="tile" x1="120" y1="80" x2="900" y2="940" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="1" stop-color="#F7F4ED"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="350" y1="365" x2="690" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#E7A13A"/>
+      <stop offset="1" stop-color="#C77820"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="-30%" y="-30%" width="170%" height="190%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#2A1A0B" flood-opacity=".2"/>
+    </filter>
+  </defs>
+  <rect x="60" y="60" width="904" height="904" rx="206" fill="url(#tile)"/>
+  <rect x="62" y="62" width="900" height="900" rx="204" fill="none" stroke="#DDD8CD" stroke-width="6"/>
+  <g fill="none" stroke="#20201F" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M340 170h300l150 150v430c0 44-36 80-80 80H340c-44 0-80-36-80-80V250c0-44 36-80 80-80Z" stroke-width="50"/>
+    <path d="M640 170v116c0 19 15 34 34 34h116" stroke-width="50"/>
+  </g>
+  <g filter="url(#soft-shadow)">
+    <rect x="350" y="385" width="340" height="104" rx="28" fill="url(#amber)" transform="rotate(7 520 437)"/>
+    <rect x="388" y="530" width="330" height="104" rx="28" fill="#20201F"/>
+    <rect x="348" y="676" width="330" height="104" rx="28" fill="#20201F"/>
+    <rect x="142" y="652" width="350" height="230" rx="64" fill="url(#amber)"/>
+  </g>
+  <g fill="none" stroke="#FFF9EF" stroke-linecap="round" stroke-linejoin="round" stroke-width="34">
+    <path d="M196 824V704l66 72 66-72v120"/>
+    <path d="M410 705v108"/>
+    <path d="m370 778 40 40 40-40"/>
+  </g>
+</svg>

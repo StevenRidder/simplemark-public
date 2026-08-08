@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SimpleMark — Beautiful living document wireframe</title>
+<style>
+  :root {
+    color-scheme: light;
+    --canvas:#ebeae7;
+    --paper:#fffefa;
+    --chrome:#f7f6f2;
+    --ink:#242321;
+    --ink-2:#696660;
+    --ink-3:#a19d95;
+    --line:#e8e5df;
+    --soft:#f3f1ec;
+    --accent:#d08a32;
+    --accent-soft:#fff1d9;
+    --agent:#7356c9;
+    --agent-soft:#f0ebff;
+    --agent-line:#d9cdfb;
+    --danger:#c75a4a;
+    --success:#51805e;
+    --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",sans-serif;
+    --serif:"Iowan Old Style","New York",Palatino,Georgia,serif;
+    --mono:"SFMono-Regular",Consolas,monospace;
+    --shadow:0 24px 75px rgba(42,39,33,.17),0 2px 9px rgba(42,39,33,.08);
+  }
+  @media (prefers-color-scheme:dark) {
+    :root {
+      color-scheme:dark;
+      --canvas:#171716;--paper:#222220;--chrome:#1d1d1b;--ink:#efede7;
+      --ink-2:#aaa69e;--ink-3:#77736d;--line:#393733;--soft:#2b2a27;
+      --accent:#eca950;--accent-soft:#48361f;--agent:#b7a4f4;
+      --agent-soft:#332c4d;--agent-line:#5d4f86;--danger:#ef8c7d;--success:#83b18e;
+      --shadow:0 26px 80px rgba(0,0,0,.48);
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--canvas);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;overflow:hidden}
+  button,input{font:inherit;color:inherit}
+  button{cursor:pointer}
+
+  .stage{height:100%;padding:22px;display:grid;place-items:center}
+  .window{width:min(1180px,100%);height:min(800px,calc(100vh - 44px));min-height:620px;background:var(--paper);border:1px solid rgba(70,65,57,.14);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column}
+  .titlebar{height:50px;flex:0 0 50px;display:flex;align-items:center;padding:0 12px;border-bottom:1px solid var(--line);background:color-mix(in srgb,var(--chrome) 84%,transparent);backdrop-filter:blur(18px);position:relative;z-index:10}
+  .left,.right{display:flex;align-items:center;gap:8px}.right{justify-content:flex-end}
+  .lights{display:flex;gap:7px;margin-right:8px}.lights i{width:11px;height:11px;border-radius:50%;background:#d9d6d0}.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+  .tool{width:30px;height:30px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);display:grid;place-items:center;font-size:17px}
+  .tool:hover{background:var(--soft);color:var(--ink)}
+  .tool svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+  .filename{text-align:left;font-size:12px;font-weight:600;line-height:1.2;margin-left:10px;min-width:135px}.filename small{display:block;font-size:9px;font-weight:450;color:var(--ink-3);margin-top:2px}
+  .edit-tools{display:none;align-items:center;gap:2px;margin-left:auto;padding:2px;background:color-mix(in srgb,var(--soft) 72%,transparent);border:1px solid color-mix(in srgb,var(--line) 74%,transparent);border-radius:10px;position:relative}
+  .edit-tool{width:31px;height:28px;border:0;border-radius:7px;background:transparent;color:var(--ink-2);display:grid;place-items:center;font-size:15px}
+  .edit-tool:hover,.edit-tool.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 4px rgba(25,22,17,.08)}
+  .edit-tool svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.65;stroke-linecap:round;stroke-linejoin:round}
+  .edit-tool.type{font:500 17px/1 var(--serif)}
+  .toolbar-divider{width:1px;height:18px;background:var(--line);margin:0 2px}
+  .format-popover{display:none;position:absolute;z-index:20;top:36px;left:0;width:218px;padding:7px;background:color-mix(in srgb,var(--paper) 96%,transparent);border:1px solid var(--line);border-radius:11px;box-shadow:0 14px 42px rgba(32,29,24,.18);backdrop-filter:blur(18px)}
+  .format-popover.open{display:block}.style-row{display:grid;grid-template-columns:1fr 1fr;gap:3px}.style-row button,.inline-row button{border:0;background:transparent;border-radius:6px;text-align:left;padding:7px 8px;font-size:11px}.style-row button:hover,.inline-row button:hover{background:var(--soft)}.style-row .selected{background:var(--accent-soft);color:#8b5b1f}.inline-row{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;border-top:1px solid var(--line);margin-top:6px;padding-top:6px}.inline-row button{text-align:center;font:600 12px var(--sans)}
+  .saved{color:var(--success);font-size:10.5px;white-space:nowrap}.saved::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:currentColor;margin-right:5px;vertical-align:1px}
+  .faces{display:none;align-items:center;margin-left:2px}.face{width:25px;height:25px;border:2px solid var(--chrome);border-radius:50%;display:grid;place-items:center;font-size:9px;font-weight:750;background:var(--agent-soft);color:var(--agent)}
+  .join{display:none;border:0;border-radius:7px;background:transparent;color:var(--ink-2);padding:6px 8px;font-size:11.5px;font-weight:550}.join:hover{background:var(--soft);color:var(--ink)}
+
+  .editor{flex:1;overflow:auto;position:relative;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+  .page{width:min(680px,calc(100% - 64px));margin:0 auto;padding:68px 0 140px}
+  .note-title{font:700 36px/1.15 var(--sans);letter-spacing:-.035em;margin:0 0 8px;outline:none}
+  .date{font-size:12px;color:var(--ink-3);margin-bottom:38px}
+  .prose{font:18px/1.68 var(--serif);letter-spacing:-.003em;margin:0 0 21px;outline:none}
+  h2{font:700 23px/1.3 var(--sans);letter-spacing:-.022em;margin:40px 0 13px}
+  .muted-rule{height:1px;background:var(--line);margin:37px 0}
+
+  .scope{position:relative;border-radius:5px;transition:background .2s,box-shadow .2s}
+  .agent-caret{display:none;position:absolute;width:2px;height:29px;background:var(--agent);right:-2px;bottom:1px;border-radius:2px}
+  .agent-caret::after{content:"Codex";position:absolute;left:0;bottom:28px;background:var(--agent);color:white;padding:2px 6px 3px;border-radius:5px 5px 5px 0;font:600 9.5px var(--sans);letter-spacing:.01em;white-space:nowrap}
+
+  .agent-card{display:none;position:relative;margin:12px -12px 25px;padding:10px 10px 9px;border:1px solid var(--agent-line);background:color-mix(in srgb,var(--agent-soft) 68%,var(--paper));border-radius:12px;box-shadow:0 10px 30px rgba(86,65,150,.10)}
+  .prompt-row{display:flex;align-items:center;gap:9px}.spark{width:25px;height:25px;flex:0 0 25px;border-radius:7px;background:var(--agent);color:white;display:grid;place-items:center;font-size:13px}
+  .prompt-row input{min-width:0;flex:1;border:0;background:transparent;outline:none;font-size:13px}
+  .prompt-row input::selection{background:var(--agent-line)}
+  .send{width:27px;height:27px;border:0;border-radius:7px;background:var(--agent);color:white;display:grid;place-items:center;font-size:15px}
+  .agent-status{display:none;align-items:center;padding:8px 2px 0 34px;font-size:11px;color:var(--agent);gap:7px}
+  .pulse{width:6px;height:6px;border-radius:50%;background:var(--agent);animation:pulse 1.35s infinite}.spacer{flex:1}
+  .text-button{border:0;background:transparent;padding:2px 5px;color:var(--agent);font-size:10.5px;font-weight:600}.text-button.stop{color:var(--danger)}
+  @keyframes pulse{50%{opacity:.25}}
+  .stopped{display:none;align-items:center;gap:8px;padding:3px 2px 0 34px;color:var(--ink-2);font-size:11px}.stopped strong{color:var(--danger)}
+  .redirect-thread{display:none;padding:2px 2px 1px}.thread-head{display:flex;align-items:center;color:var(--ink-3);font-size:9.5px;margin:0 3px 9px}.thread-head strong{color:var(--ink-2);font-size:10.5px}.thread-head span{margin-left:auto}.message{display:flex;gap:8px;align-items:flex-start;margin:7px 2px}.message.me{flex-direction:row-reverse}.mini-face{width:21px;height:21px;flex:0 0 21px;border-radius:6px;display:grid;place-items:center;background:var(--agent);color:white;font-size:8px;font-weight:700}.message.me .mini-face{background:var(--accent-soft);color:#8b5b1f}.bubble{max-width:78%;padding:7px 9px;border-radius:8px;background:var(--paper);border:1px solid var(--line);font-size:11px;line-height:1.35;color:var(--ink-2)}.message.me .bubble{background:var(--agent-soft);border-color:var(--agent-line);color:var(--ink)}
+  .thread-mode{display:flex;align-items:center;gap:2px;margin:11px 2px 5px;border-top:1px solid var(--agent-line);padding-top:8px}.thread-mode button{border:0;background:transparent;border-radius:5px;padding:3px 6px;color:var(--ink-3);font-size:9.5px}.thread-mode button.active{background:var(--paper);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.07)}.thread-mode span{margin-left:auto;color:var(--ink-3);font-size:9px}
+  .redirect-compose{display:flex;align-items:center;gap:7px;background:var(--paper);border:1px solid var(--agent-line);border-radius:8px;padding:6px 6px 6px 9px}.to{color:var(--agent);font-size:9.5px;font-weight:650;white-space:nowrap}.redirect-compose input{min-width:0;flex:1;border:0;background:transparent;outline:none;font-size:11.5px}.redirect-compose button{border:0;background:var(--agent);color:white;border-radius:6px;padding:5px 8px;font-size:9.5px;font-weight:650;white-space:nowrap}
+
+  .diagram{position:relative;margin:29px 0 25px;padding:34px 28px 29px;background:var(--soft);border-radius:13px;overflow:hidden}
+  .diagram-label{position:absolute;top:11px;left:14px;font:9.5px var(--mono);color:var(--ink-3)}
+  .edit-source{position:absolute;top:8px;right:9px;border:0;background:transparent;color:var(--ink-3);font-size:10px;padding:4px 6px;border-radius:5px}.edit-source:hover{background:var(--paper);color:var(--ink)}
+  .flow{display:flex;align-items:center;justify-content:center;gap:10px;min-height:76px}.node{padding:9px 13px;border-radius:8px;background:var(--paper);border:1px solid var(--line);font:11px var(--mono);color:var(--ink-2);box-shadow:0 1px 2px rgba(0,0,0,.03)}.node.ai{color:var(--agent);border-color:var(--agent-line);background:var(--agent-soft)}.arrow{font-size:17px;color:var(--ink-3)}
+  .change{display:none;align-items:center;gap:6px;margin:-15px 2px 27px;color:var(--ink-3);font-size:10.5px}.change i{width:6px;height:6px;border-radius:50%;background:var(--agent)}.undo{border:0;background:transparent;color:var(--agent);padding:2px 4px;margin-left:2px;font-size:10.5px;font-weight:600}
+
+  .command{display:none;position:fixed;left:50%;bottom:52px;transform:translateX(-50%);z-index:5;align-items:center;gap:8px;padding:7px 8px 7px 11px;border:1px solid var(--line);border-radius:12px;background:color-mix(in srgb,var(--paper) 92%,transparent);box-shadow:0 12px 38px rgba(35,31,25,.16);backdrop-filter:blur(18px);font-size:11px;color:var(--ink-2)}
+  .command kbd{font:10px var(--sans);color:var(--ink-3);border:1px solid var(--line);border-radius:4px;padding:1px 4px;background:var(--soft)}
+  .command button{border:0;border-radius:7px;padding:5px 8px;background:var(--agent);color:white;font-size:10.5px;font-weight:650}
+
+  .preview{position:fixed;z-index:10;left:50%;bottom:11px;transform:translateX(-50%);display:flex;align-items:center;gap:3px;padding:3px;background:rgba(45,43,40,.87);box-shadow:0 7px 24px rgba(0,0,0,.18);border-radius:9px;backdrop-filter:blur(14px)}
+  .preview span{color:rgba(255,255,255,.52);font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:0 7px}
+  .preview button{border:0;background:transparent;color:rgba(255,255,255,.68);font-size:10.5px;padding:5px 9px;border-radius:6px}.preview button.on{background:rgba(255,255,255,.17);color:white}
+
+  body[data-state="working"] .faces,body[data-state="interrupted"] .faces,body[data-state="redirecting"] .faces{display:flex}
+  body[data-state="working"] .scope,body[data-state="interrupted"] .scope,body[data-state="redirecting"] .scope{background:linear-gradient(180deg,transparent 3%,var(--agent-soft) 3%,var(--agent-soft) 96%,transparent 96%);box-shadow:-5px 0 0 var(--agent-line);padding-left:3px;margin-left:-3px}
+  body[data-state="working"] .agent-caret{display:block}
+  body[data-state="working"] .agent-card,body[data-state="interrupted"] .agent-card,body[data-state="redirecting"] .agent-card{display:block}
+  body[data-state="working"] .agent-status{display:flex}
+  body[data-state="interrupted"] .stopped{display:flex}
+  body[data-state="redirecting"] .prompt-row{display:none}
+  body[data-state="redirecting"] .redirect-thread{display:block}
+  body:not([data-state="calm"]) .change{display:flex}
+  body:not([data-state="calm"]) .edit-tools,body:not([data-state="calm"]) .join{display:flex}
+
+  @media(max-width:720px){
+    .stage{padding:0}.window{width:100%;height:100%;min-height:0;border:0;border-radius:0}.titlebar{backdrop-filter:none}.filename{display:none}.path-hide,.saved{display:none}.left{margin-right:auto}.right{margin-left:auto}.right .tool{display:none}.join{font-size:10.5px}.edit-tools{position:fixed;z-index:15;left:10px;right:10px;bottom:47px;margin:0 auto;width:max-content;max-width:calc(100% - 20px);background:color-mix(in srgb,var(--paper) 94%,transparent);box-shadow:0 8px 28px rgba(28,25,21,.14);backdrop-filter:blur(18px)}.format-popover{top:auto;bottom:37px}.page{width:calc(100% - 42px);padding-top:44px;padding-bottom:210px}.note-title{font-size:31px}.prose{font-size:17px}.agent-caret::after{left:auto;right:0;border-radius:5px 5px 0 5px}.command{bottom:89px}.preview span{display:none}.diagram{padding-left:14px;padding-right:14px}.flow{gap:5px}.node{font-size:9px;padding:8px}.arrow{font-size:13px}}
+</style>
+</head>
+<body data-state="calm">
+<div class="stage">
+  <main class="window" aria-label="SimpleMark document">
+    <header class="titlebar">
+      <div class="left">
+        <div class="lights" aria-hidden="true"><i></i><i></i><i></i></div>
+        <button class="tool" aria-label="Back">
+          <svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg>
+        </button>
+        <button class="tool path-hide" aria-label="Document list">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+        </button>
+        <button class="tool" aria-label="New note" title="New note">
+          <svg viewBox="0 0 24 24"><path d="M12 20H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9"/><path d="m14 14 6-6-4-4-6 6-1 5 5-1Z"/></svg>
+        </button>
+      </div>
+      <div class="filename">plan.md<small>~/Documents/AI Work</small></div>
+      <div class="edit-tools" aria-label="Editing tools">
+        <button class="edit-tool type" id="formatButton" aria-label="Text formatting" title="Text formatting">Aa</button>
+        <button class="edit-tool" aria-label="Checklist" title="Checklist">
+          <svg viewBox="0 0 24 24"><path d="m4 6 1.5 1.5L8 5"/><path d="m4 12 1.5 1.5L8 11"/><path d="m4 18 1.5 1.5L8 17"/><path d="M11 6h9M11 12h9M11 18h9"/></svg>
+        </button>
+        <button class="edit-tool" aria-label="Table" title="Table">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg>
+        </button>
+        <button class="edit-tool" aria-label="Insert image or link file" title="Insert image or link file">
+          <svg viewBox="0 0 24 24"><path d="m20.5 11.5-8.8 8.8a6 6 0 0 1-8.5-8.5l9.5-9.5a4 4 0 0 1 5.7 5.7l-9.6 9.5a2 2 0 1 1-2.8-2.8l8.8-8.8"/></svg>
+        </button>
+        <button class="edit-tool" aria-label="Insert diagram" title="Diagram or drawing">
+          <svg viewBox="0 0 24 24"><rect x="3" y="4" width="6" height="5" rx="1"/><rect x="15" y="15" width="6" height="5" rx="1"/><path d="M9 6.5h5a3 3 0 0 1 3 3V15M12 12l5 3 4-3"/></svg>
+        </button>
+        <div class="format-popover" id="formatPopover">
+          <div class="style-row"><button>Title</button><button>Heading</button><button class="selected">Body</button><button>Monospaced</button></div>
+          <div class="inline-row"><button aria-label="Bold"><b>B</b></button><button aria-label="Italic"><i>I</i></button><button aria-label="Underline"><u>U</u></button><button aria-label="Strikethrough"><s>S</s></button></div>
+        </div>
+      </div>
+      <div class="right">
+        <span class="saved">Saved</span>
+        <div class="faces" aria-label="Codex is present"><span class="face">C</span></div>
+        <button class="join" id="invite">Work with AI</button>
+        <button class="tool" aria-label="Share" title="Share">
+          <svg viewBox="0 0 24 24"><path d="M12 16V3M8 7l4-4 4 4"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/></svg>
+        </button>
+        <button class="tool" aria-label="Search" title="Search">
+          <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+        </button>
+        <button class="tool" aria-label="More" title="More">
+          <svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <section class="editor">
+      <article class="page">
+        <h1 class="note-title" contenteditable="true">The beautiful living document</h1>
+        <div class="date">Updated by Codex just now</div>
+
+        <p class="prose" contenteditable="true">Your agent writes the Markdown. SimpleMark turns the same local file into a beautiful technical document you can read, judge, and occasionally correct outside the coding environment.</p>
+
+        <h2 contenteditable="true">The document is the product</h2>
+        <p class="prose scope" contenteditable="true">The page stays rendered while Codex, Claude, or another tool updates the file. Reading position remains stable. Source appears only for the exact sentence or block you choose to correct.<i class="agent-caret" contenteditable="false"></i></p>
+
+        <div class="agent-card">
+          <div class="prompt-row">
+            <span class="spark">✦</span>
+            <input aria-label="Instruction to Codex" value="Turn this section into a simple diagram">
+            <button class="send" aria-label="Send">↑</button>
+          </div>
+          <div class="agent-status"><i class="pulse"></i><span id="workingText">Codex is working in this passage</span><span class="spacer"></span><button class="text-button" id="redirect">Redirect</button><button class="text-button stop" id="stop">Stop</button></div>
+          <div class="stopped"><strong>Stopped.</strong><span>Late changes from that run cannot land.</span><span class="spacer"></span><button class="text-button" id="resume">Redirect</button></div>
+          <div class="redirect-thread">
+            <div class="thread-head"><strong>Passage conversation</strong><span>live · anchored here</span></div>
+            <div class="message"><span class="mini-face">C</span><div class="bubble">I’m turning this into a three-step system diagram.</div></div>
+            <div class="message me"><span class="mini-face">SR</span><div class="bubble">Keep Markdown at the center. Hide the sync machinery.</div></div>
+            <div class="thread-mode"><button class="active" data-mode="live">Redirect now</button><button data-mode="note">Leave note</button><span id="modeHelp">stops and replaces the AI run</span></div>
+            <div class="redirect-compose"><span class="to" id="recipient">To Codex</span><input id="redirectInput" aria-label="Redirect instruction" value="Make the document—not the session—the center"><button id="sendRedirect">Send redirect</button></div>
+          </div>
+        </div>
+
+        <figure class="diagram">
+          <span class="diagram-label">mermaid</span><button class="edit-source">Edit source</button>
+          <div class="flow">
+            <div class="node ai">External agent</div><div class="arrow">→</div>
+            <div class="node">Markdown file</div><div class="arrow">→</div>
+            <div class="node">SimpleMark</div>
+          </div>
+        </figure>
+        <div class="change"><i></i><span>Added by Codex just now</span><button class="undo">Undo this change</button></div>
+
+        <p class="prose" contenteditable="true">Mermaid, SVG, math, tables, code, and technical material belong inline on the page. Markdown punctuation is storage syntax, not the reading interface.</p>
+        <div class="muted-rule"></div>
+        <p class="prose" contenteditable="true">Nothing else is required for the first proof: one file, one window, exceptional rendering, calm external updates, one small correction, and untouched source that remains byte-identical.</p>
+      </article>
+    </section>
+  </main>
+</div>
+
+<div class="command"><span>Select text to work with AI</span><kbd>⌘</kbd><kbd>J</kbd><button id="commandInvite">Ask Codex</button></div>
+
+<nav class="preview" aria-label="Wireframe state">
+  <span>Preview</span>
+  <button class="on" data-view="calm">Reading</button>
+  <button data-view="working">Later: AI working</button>
+  <button data-view="redirecting">Later: redirect</button>
+  <button data-view="interrupted">Later: stopped</button>
+</nav>
+
+<script>
+  const stateButtons = [...document.querySelectorAll('[data-view]')]
+  function showState(state) {
+    document.body.dataset.state = state
+    stateButtons.forEach(button => button.classList.toggle('on', button.dataset.view === state))
+  }
+  stateButtons.forEach(button => button.addEventListener('click', () => showState(button.dataset.view)))
+  document.querySelector('#invite').addEventListener('click', () => showState('working'))
+  document.querySelector('#commandInvite').addEventListener('click', () => showState('working'))
+  document.querySelector('#stop').addEventListener('click', () => showState('interrupted'))
+  document.querySelector('#redirect').addEventListener('click', () => showState('redirecting'))
+  document.querySelector('#resume').addEventListener('click', () => showState('redirecting'))
+  const modeButtons = [...document.querySelectorAll('.thread-mode button')]
+  const sendRedirect = document.querySelector('#sendRedirect')
+  const recipient = document.querySelector('#recipient')
+  const modeHelp = document.querySelector('#modeHelp')
+  modeButtons.forEach(button => button.addEventListener('click', () => {
+    modeButtons.forEach(item => item.classList.toggle('active', item === button))
+    const noteMode = button.dataset.mode === 'note'
+    recipient.textContent = noteMode ? 'Note' : 'To Codex'
+    sendRedirect.textContent = noteMode ? 'Leave note' : 'Send redirect'
+    modeHelp.textContent = noteMode ? 'does not interrupt anyone' : 'stops and replaces the AI run'
+  }))
+  sendRedirect.addEventListener('click', () => {
+    if (document.querySelector('.thread-mode .active').dataset.mode === 'note') {
+      sendRedirect.textContent = 'Note added'
+      return
+    }
+    document.querySelector('#workingText').textContent = 'Codex restarted with your redirect'
+    showState('working')
+  })
+  const formatButton = document.querySelector('#formatButton')
+  const formatPopover = document.querySelector('#formatPopover')
+  formatButton.addEventListener('click', () => {
+    const open = formatPopover.classList.toggle('open')
+    formatButton.classList.toggle('active', open)
+  })
+</script>
+</body>
+</html>

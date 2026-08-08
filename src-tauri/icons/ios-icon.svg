@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark for iOS</title>
+  <desc id="desc">The Electric and Black mark — one electric blue and two charcoal movable blocks with a blue Markdown badge — drawn full-bleed for a platform that applies its own mask.</desc>
+  <!--
+    The iOS sibling of `alternates/electric-blocks.svg`, and deliberately not a
+    copy of it.
+
+    A macOS icon draws its own rounded tile with transparent corners around it.
+    iOS masks every icon itself, so shipping that artwork here would mask an
+    already-masked tile: grey border ring inside the squircle, black corners
+    where the transparency lands, and a mark shrunken twice over.
+
+    So the tile and its border are gone, the background runs to all four edges,
+    and the mark is scaled to sit inside the corner radius iOS will cut. The
+    geometry below is otherwise identical to the macOS source — one artwork,
+    two platform frames.
+  -->
+  <defs>
+    <linearGradient id="royal" x1="350" y1="365" x2="690" y2="760" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2D67FF"/>
+      <stop offset="1" stop-color="#1548E7"/>
+    </linearGradient>
+    <filter id="soft-shadow" x="-30%" y="-30%" width="170%" height="190%">
+      <feDropShadow dx="0" dy="18" stdDeviation="18" flood-color="#0F172A" flood-opacity=".22"/>
+    </filter>
+  </defs>
+
+  <!-- Full bleed. iOS rejects alpha in an app icon and cuts the corners itself. -->
+  <rect x="0" y="0" width="1024" height="1024" fill="#FFFFFF"/>
+
+  <!--
+    The mark's own bounds are x 142–815, y 145–882 once stroke width is counted,
+    so it is neither centred nor square inside the canvas. Recentring it and
+    growing it slightly fills the space the discarded tile used to take, while
+    staying inside the ~80% safe area an iOS mask leaves untouched.
+  -->
+  <g transform="translate(512 512) scale(1.06) translate(-478.5 -513.5)">
+    <g fill="none" stroke="#20201F" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M340 170h300l150 150v430c0 44-36 80-80 80H340c-44 0-80-36-80-80V250c0-44 36-80 80-80Z" stroke-width="50"/>
+      <path d="M640 170v116c0 19 15 34 34 34h116" stroke-width="50"/>
+    </g>
+    <g data-block-palette="royal-charcoal-charcoal" filter="url(#soft-shadow)">
+      <rect x="350" y="385" width="340" height="104" rx="28" fill="url(#royal)" transform="rotate(7 520 437)"/>
+      <rect x="388" y="530" width="330" height="104" rx="28" fill="#20201F"/>
+      <rect x="348" y="676" width="330" height="104" rx="28" fill="#20201F"/>
+      <rect x="142" y="652" width="350" height="230" rx="64" fill="url(#royal)"/>
+    </g>
+    <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="34">
+      <path d="M196 824V704l66 72 66-72v120"/>
+      <path d="M410 705v108"/>
+      <path d="m370 778 40 40 40-40"/>
+    </g>
+  </g>
+</svg>

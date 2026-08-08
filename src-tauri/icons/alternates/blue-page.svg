@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark Blue Page</title>
+  <desc id="desc">A navy document with a vivid blue living line and blue Markdown badge on white.</desc>
+  <defs>
+    <linearGradient id="blue" x1="155" y1="545" x2="545" y2="865" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#357EF5"/>
+      <stop offset="1" stop-color="#175BE4"/>
+    </linearGradient>
+    <filter id="blue-shadow" x="-35%" y="-35%" width="180%" height="190%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#1249B4" flood-opacity=".22"/>
+    </filter>
+  </defs>
+  <rect data-tile-background="#FFFFFF" x="60" y="60" width="904" height="904" rx="206" fill="#FFFFFF"/>
+  <rect x="62" y="62" width="900" height="900" rx="204" fill="none" stroke="#E2E8F2" stroke-width="6"/>
+  <g fill="none" stroke="#081A45" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M346 176h300l142 142v436c0 42-34 76-76 76H346c-42 0-76-34-76-76V252c0-42 34-76 76-76Z" stroke-width="48"/>
+    <path d="M646 176v108c0 19 15 34 34 34h108" stroke-width="48"/>
+    <path d="M396 430h260M396 586h260" stroke-width="34"/>
+  </g>
+  <path d="M396 508h260" fill="none" stroke="#2A72F3" stroke-linecap="round" stroke-width="34"/>
+  <g filter="url(#blue-shadow)">
+    <rect x="170" y="640" width="310" height="204" rx="54" fill="url(#blue)"/>
+  </g>
+  <g fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="31">
+    <path d="M210 798v-104l58 64 58-64v104"/>
+    <path d="M405 696v92"/>
+    <path d="m371 758 34 34 34-34"/>
+  </g>
+</svg>

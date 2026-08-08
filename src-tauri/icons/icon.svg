@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark</title>
+  <desc id="desc">The SimpleMark document and Markdown badge on a warm tan app tile.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fffefa"/>
+      <stop offset="1" stop-color="#f3efe4"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="34" y="34" width="444" height="444" rx="100" fill="url(#paper)"/>
+  <rect x="34" y="34" width="444" height="444" rx="100" fill="none" stroke="#e3ddcf" stroke-width="4"/>
+
+  <!-- Keep the native icon in lockstep with the logo used by the private website. -->
+  <g transform="translate(72 72) scale(.71875)">
+    <g fill="none" stroke="#242321" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M152 52h178l94 94v278a24 24 0 0 1-24 24H152a24 24 0 0 1-24-24V76a24 24 0 0 1 24-24Z" stroke-width="28"/>
+      <path d="M330 52v78a16 16 0 0 0 16 16h78" stroke-width="28"/>
+      <path d="M214 194h142M214 242h142M214 290h100" stroke-width="22"/>
+    </g>
+    <rect x="42" y="280" width="266" height="184" rx="38" fill="#D08A32"/>
+    <g fill="none" stroke="#FFF7EA" stroke-linecap="round" stroke-linejoin="round" stroke-width="23">
+      <path d="M78 416v-88l50 54 50-54v88"/>
+      <path d="M242 328v78"/>
+      <path d="m215 382 27 27 27-27"/>
+    </g>
+  </g>
+</svg>

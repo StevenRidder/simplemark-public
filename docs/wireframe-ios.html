@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SimpleMark — iPhone navigation wireframe</title>
+<style>
+  :root {
+    --app: #eeece7;
+    --window: #fbfaf7;
+    --paper: #fffefa;
+    --ink: #262521;
+    --soft-ink: #716e67;
+    --quiet: #a5a197;
+    --line: #e8e5de;
+    --toolbar: #f7f5f0;
+    --selection: #f1eee7;
+    --accent: #a66a2d;
+    --accent-soft: #f6e7d2;
+    --agent: #4a6fa5;
+    --agent-soft: #e4ecf6;
+    --agent-line: #b9cbe4;
+    --note-tint: #f6e7bd;
+    --note-line: #e3ce93;
+    --stop: #a2453a;
+    --stop-soft: #f6e3e0;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    --serif: "Iowan Old Style", "New York", Georgia, serif;
+    --mono: "SFMono-Regular", Consolas, monospace;
+    --shadow: 0 24px 76px rgba(45, 41, 33, .17), 0 2px 6px rgba(45, 41, 33, .08);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --app: #171614;
+      --window: #201f1c;
+      --paper: #24231f;
+      --ink: #e6e3dc;
+      --soft-ink: #a39f96;
+      --quiet: #74706a;
+      --line: #33312c;
+      --toolbar: #26251f;
+      --selection: #2b2a25;
+      --accent: #d19a5c;
+      --accent-soft: #3a2e1e;
+      --agent: #8fb0dc;
+      --agent-soft: #1f2a38;
+      --agent-line: #3b4d66;
+      --note-tint: #4a4029;
+      --note-line: #6d5c34;
+      --stop: #d98d82;
+      --stop-soft: #37211e;
+      --shadow: 0 24px 76px rgba(0, 0, 0, .55), 0 2px 6px rgba(0, 0, 0, .4);
+    }
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--app);
+    color: var(--ink);
+    font: 15px/1.6 var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 56px 28px 120px; }
+
+  .eyebrow {
+    font-size: 11px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--quiet); font-weight: 600; margin: 0 0 10px;
+  }
+  h1 { font: 600 30px/1.25 var(--sans); margin: 0 0 10px; letter-spacing: -.015em; }
+  .standfirst { color: var(--soft-ink); max-width: 68ch; margin: 0 0 6px; }
+  .sources { color: var(--quiet); font-size: 13px; max-width: 82ch; }
+  .sources code { font-family: var(--mono); font-size: 12px; }
+
+  h2 {
+    font: 600 21px/1.3 var(--sans); margin: 64px 0 6px;
+    padding-top: 22px; border-top: 1px solid var(--line); letter-spacing: -.01em;
+  }
+  h2 .num { color: var(--quiet); font-weight: 500; margin-right: 10px; }
+  h3 { font: 600 15px/1.4 var(--sans); margin: 34px 0 10px; }
+  .lede { color: var(--soft-ink); max-width: 72ch; margin: 0 0 22px; }
+
+  .rule {
+    border-left: 3px solid var(--accent); background: var(--accent-soft);
+    padding: 12px 16px; margin: 22px 0; border-radius: 0 5px 5px 0;
+    font-size: 14px; max-width: 80ch;
+  }
+  .rule.warn { border-left-color: var(--stop); background: var(--stop-soft); }
+  .rule .cite { display: block; margin-top: 6px; color: var(--soft-ink); font-size: 12.5px; }
+
+  /* ---------- stepper ---------- */
+  .stepper { display: flex; flex-wrap: wrap; gap: 7px; margin: 22px 0 20px; }
+  .stepper button {
+    font: 500 12.5px var(--sans); padding: 6px 12px; border-radius: 20px;
+    border: 1px solid var(--line); background: var(--window); color: var(--soft-ink);
+    cursor: pointer;
+  }
+  .stepper button[aria-pressed="true"] {
+    background: var(--ink); border-color: var(--ink); color: var(--window);
+  }
+  .stepper button.later[aria-pressed="true"] { background: var(--agent); border-color: var(--agent); }
+
+  /* ---------- phone ---------- */
+  .stage { display: grid; grid-template-columns: 392px minmax(0, 1fr); gap: 34px; align-items: start; }
+  @media (max-width: 880px) { .stage { grid-template-columns: 1fr; } }
+
+  .phone {
+    width: 390px; max-width: 100%; height: 800px; overflow: hidden; position: relative;
+    display: grid; grid-template-rows: 30px minmax(0, 1fr);
+    border: 1px solid var(--line); border-radius: 36px; background: var(--paper);
+    box-shadow: var(--shadow);
+  }
+  .statusbar {
+    display: grid; grid-template-columns: 1fr auto 1fr; align-items: center;
+    padding: 9px 20px 0; background: var(--toolbar); font-size: 11px; font-weight: 500;
+    color: var(--ink);
+  }
+  .statusbar .island { width: 86px; height: 18px; border-radius: 999px; background: #111; }
+  .statusbar .right { justify-self: end; color: var(--soft-ink); font-size: 10.5px; }
+
+  .screen { min-height: 0; display: none; grid-template-rows: auto minmax(0, 1fr) auto; background: var(--paper); }
+  .screen.on { display: grid; }
+
+  .nav {
+    min-height: 50px; display: grid; grid-template-columns: minmax(84px, 1fr) auto minmax(84px, 1fr);
+    align-items: center; gap: 6px; padding: 4px 11px;
+    border-bottom: 1px solid var(--line); background: var(--toolbar);
+  }
+  .nav .lead, .nav .trail { min-width: 0; display: flex; align-items: center; gap: 2px; white-space: nowrap; }
+  .nav .trail { justify-content: flex-end; }
+  .nav-title { font-size: 15px; font-weight: 500; text-align: center; overflow: hidden;
+    text-overflow: ellipsis; white-space: nowrap; max-width: 170px; }
+  .nav-title small { display: block; font-size: 10px; font-weight: 400; color: var(--quiet); }
+  .act {
+    min-width: 0; max-width: 100%; min-height: 34px;
+    display: inline-flex; align-items: center; justify-content: center; gap: 3px;
+    padding: 0 5px; border: 0; border-radius: 9px; background: transparent;
+    color: var(--accent); font: inherit; font-size: 14px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .act.icon { min-width: 34px; padding: 0; }
+  .act.plain { color: var(--ink); font-weight: 500; }
+  .act.strong { font-weight: 600; }
+  .ico { width: 17px; height: 17px; flex: none; }
+
+  .body { min-height: 0; overflow: hidden; }
+  .large-title { padding: 16px 18px 6px; font-size: 27px; font-weight: 500; letter-spacing: -.035em; }
+  .search {
+    min-height: 36px; margin: 4px 14px 8px; border-radius: 10px; display: flex; align-items: center;
+    gap: 7px; padding: 0 11px; background: var(--selection); color: var(--quiet); font-size: 13px;
+  }
+
+  .rows { padding: 0 14px; }
+  .row {
+    min-height: 76px; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 3px 9px;
+    padding: 12px 8px; border-bottom: 1px solid var(--line);
+  }
+  .row.sel { border: 0; border-radius: 12px; background: var(--selection); }
+  .row strong { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row time { color: var(--quiet); font-size: 11px; }
+  .row p { grid-column: 1 / -1; margin: 0; color: var(--soft-ink); font-size: 13px; line-height: 1.35;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .meta { grid-column: 1 / -1; display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--agent); }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--agent); flex: none; }
+  .dot.note { background: var(--accent); }
+
+  .foot {
+    min-height: 50px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 7px 14px 10px; border-top: 1px solid var(--line); background: var(--toolbar);
+    color: var(--quiet); font-size: 11px;
+  }
+  .foot button {
+    min-height: 34px; display: inline-flex; align-items: center; gap: 5px; padding: 0 8px;
+    border: 0; border-radius: 9px; background: transparent; color: var(--soft-ink); font: inherit; font-size: 11.5px;
+  }
+
+  /* empty state */
+  .empty { display: grid; align-content: center; justify-items: center; gap: 9px; padding: 30px 34px; text-align: center; height: 100%; }
+  .empty .glyph { width: 46px; height: 46px; color: var(--quiet); }
+  .empty h4 { margin: 4px 0 0; font: 500 19px var(--sans); }
+  .empty p { margin: 0; color: var(--soft-ink); font-size: 13.5px; line-height: 1.5; }
+  .empty .where { margin-top: 3px; font-size: 11.5px; color: var(--quiet); font-family: var(--mono); }
+  .cta {
+    margin-top: 12px; min-height: 42px; display: inline-flex; align-items: center; gap: 7px;
+    padding: 0 18px; border: 0; border-radius: 11px; background: var(--accent); color: #fff;
+    font: 500 14px var(--sans);
+  }
+  .cta.ghost { background: transparent; color: var(--accent); border: 1px solid var(--line); margin-top: 2px; }
+
+  /* banner */
+  .banner {
+    display: flex; align-items: flex-start; gap: 8px; padding: 9px 13px;
+    background: var(--stop-soft); color: var(--stop); font-size: 12px; line-height: 1.4;
+    border-bottom: 1px solid var(--line);
+  }
+  .banner .ico { margin-top: 1px; }
+  .banner b { font-weight: 600; }
+  .banner .x { margin-left: auto; color: var(--stop); opacity: .7; }
+
+  /* sheet */
+  .scrim { position: absolute; inset: 80px 0 0; z-index: 4; background: rgba(30, 27, 22, .2); }
+  .sheet {
+    position: absolute; right: 8px; bottom: 8px; left: 8px; z-index: 5; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 20px; background: var(--toolbar);
+    box-shadow: 0 -12px 45px rgba(30, 27, 22, .2);
+  }
+  .grab { width: 38px; height: 4px; margin: 10px auto 6px; border-radius: 999px; background: var(--quiet); }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; min-height: 38px; padding: 0 16px 4px; }
+  .sheet-head strong { font-size: 16px; font-weight: 500; }
+  .sheet-head span { color: var(--accent); font-size: 13.5px; }
+  .sec { padding: 12px 16px 5px; color: var(--quiet); font-size: 10px; letter-spacing: .07em; text-transform: uppercase; }
+  .scope {
+    min-height: 44px; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center;
+    gap: 9px; padding: 0 16px; border-top: 1px solid var(--line); font-size: 14px;
+  }
+  .scope .ico { color: var(--soft-ink); }
+  .scope .n { color: var(--quiet); font-size: 11px; }
+  .scope.cur { color: var(--accent); }
+  .scope.cur .ico { color: var(--accent); }
+  .scope.off { color: var(--quiet); }
+  .scope.off .ico { color: var(--quiet); }
+  .scope.tall { min-height: 62px; grid-template-rows: auto auto; padding-top: 8px; padding-bottom: 8px; }
+  .scope.tall small { grid-column: 2 / -1; margin-top: -2px; color: var(--soft-ink); font-size: 10.5px; line-height: 1.35; }
+
+  /* document */
+  .doc { min-height: 0; overflow: hidden; padding: 28px 22px 30px; background: var(--paper); font-family: var(--serif); }
+  .doc h4 { margin: 0 0 5px; font: 500 28px/1.15 var(--sans); letter-spacing: -.045em; }
+  .doc .path { margin-bottom: 16px; color: var(--quiet); font-family: var(--sans); font-size: 11px; }
+  .doc h5 { margin: 22px 0 9px; font: 500 20px var(--sans); letter-spacing: -.03em; }
+  .doc p { margin: 0 0 11px; font-size: 17px; line-height: 1.6; }
+  .anchor { background: var(--note-tint); border-bottom: 2px solid var(--note-line); border-radius: 2px; padding: 0 1px; }
+  .caret { display: inline-block; width: 2px; height: 18px; background: var(--accent); vertical-align: -3px; }
+  .diagram {
+    margin-top: 18px; border: 1px solid var(--line); border-radius: 13px; padding: 14px 12px;
+    background: var(--selection); font-family: var(--sans); font-size: 11px; text-align: center; color: var(--soft-ink);
+  }
+  .agent-status {
+    margin-top: 16px; border: 1px solid var(--agent-line); border-radius: 9px; display: flex; align-items: center;
+    gap: 7px; padding: 8px 10px; background: var(--agent-soft); color: var(--agent);
+    font-family: var(--sans); font-size: 11.5px;
+  }
+
+  .tools {
+    min-height: 54px; display: flex; align-items: center; justify-content: space-around; gap: 5px;
+    padding: 6px 12px 10px; border-top: 1px solid var(--line); background: var(--toolbar);
+  }
+  .tool {
+    min-width: 62px; min-height: 38px; display: grid; place-items: center; gap: 1px; padding: 2px 7px;
+    border: 0; border-radius: 9px; background: transparent; color: var(--soft-ink); font: inherit; font-size: 10px;
+  }
+  .tool.note { color: var(--accent); }
+  .tool.primary {
+    min-width: 108px; grid-auto-flow: column; align-content: center; justify-content: center;
+    background: var(--accent); color: #fff; font-size: 12.5px;
+  }
+
+  /* styles bar (keyboard accessory) */
+  .styles {
+    display: flex; align-items: center; gap: 2px; padding: 7px 8px; overflow-x: auto;
+    border-top: 1px solid var(--line); background: var(--toolbar);
+  }
+  .styles button {
+    min-width: 38px; min-height: 34px; display: grid; place-items: center; flex: none;
+    border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: 500 13px var(--sans);
+  }
+  .keyboard {
+    height: 132px; border-top: 1px solid var(--line); background: var(--selection);
+    display: grid; place-items: center; color: var(--quiet); font-size: 11px; font-family: var(--sans);
+  }
+
+  /* thread */
+  .anchor-ctx {
+    margin: 3px 12px 10px; border-left: 3px solid var(--note-line); padding: 7px 9px;
+    background: var(--note-tint); color: var(--soft-ink); font-family: var(--serif); font-size: 12.5px; line-height: 1.35;
+  }
+  .msg { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 8px; padding: 7px 14px; font-size: 13px; line-height: 1.4; }
+  .who { color: var(--soft-ink); font-size: 11px; font-weight: 600; }
+  .who.a { color: var(--agent); }
+  .thread-acts { display: flex; align-items: center; gap: 7px; padding: 10px 14px 12px; border-top: 1px solid var(--line); }
+  .tact {
+    min-height: 34px; padding: 0 11px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--paper); color: var(--ink); font: inherit; font-size: 12px;
+  }
+  .tact.primary { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+  .tact.control { border-color: var(--stop); color: var(--stop); }
+  .tmeta { margin-left: auto; color: var(--quiet); font-size: 10px; }
+
+  /* conflict */
+  .versions { display: grid; gap: 8px; padding: 4px 14px 2px; }
+  .version {
+    border: 1px solid var(--line); border-radius: 11px; padding: 9px 11px; background: var(--paper);
+  }
+  .version .k { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--quiet); font-weight: 600; margin-bottom: 4px; }
+  .version p { margin: 0; font-family: var(--serif); font-size: 13px; line-height: 1.4; color: var(--soft-ink); }
+
+  /* menu sheet */
+  .menu-row {
+    min-height: 44px; display: grid; grid-template-columns: 22px minmax(0, 1fr) auto; align-items: center;
+    gap: 9px; padding: 0 16px; border-top: 1px solid var(--line); font-size: 14px;
+  }
+  .menu-row .ico { color: var(--soft-ink); }
+  .menu-row.off { color: var(--quiet); }
+  .menu-row.off .ico { color: var(--quiet); }
+  .menu-row .why { color: var(--quiet); font-size: 10.5px; }
+
+  /* notes column beside the phone */
+  .notes-col { padding-top: 4px; }
+  .note-card {
+    border: 1px solid var(--line); border-radius: 9px; background: var(--window);
+    padding: 13px 15px; margin-bottom: 12px;
+  }
+  .note-card .k {
+    font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--quiet);
+    font-weight: 600; margin-bottom: 6px;
+  }
+  .note-card.changed .k { color: var(--accent); }
+  .note-card p { margin: 0 0 8px; font-size: 13px; line-height: 1.55; color: var(--soft-ink); }
+  .note-card p:last-child { margin-bottom: 0; }
+  .note-card strong { color: var(--ink); font-weight: 600; }
+  .note-card .cite { display: block; margin-top: 7px; color: var(--quiet); font-size: 11px; }
+  .state-note { display: none; }
+  .state-note.on { display: block; }
+
+  table.matrix { border-collapse: collapse; width: 100%; font-size: 13px; margin: 18px 0; }
+  table.matrix th, table.matrix td { border: 1px solid var(--line); padding: 8px 11px; text-align: left; vertical-align: top; }
+  table.matrix th { background: var(--toolbar); font-weight: 600; font-size: 12px; }
+  table.matrix td.no { color: var(--stop); }
+  table.matrix td.yes { color: var(--accent); }
+  .scroll { overflow-x: auto; }
+  .caption { font-size: 12px; color: var(--quiet); margin: 8px 0 0; max-width: 80ch; }
+  code.inline { font-family: var(--mono); font-size: 12.5px; background: var(--toolbar);
+    border: 1px solid var(--line); border-radius: 3px; padding: 0 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <g id="i-chev-left"><path d="M15 5 8 12l7 7"/></g>
+  <g id="i-chev-down"><path d="M6 9l6 6 6-6"/></g>
+  <g id="i-search"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></g>
+  <g id="i-file-plus"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M12 12v5M9.5 14.5h5"/></g>
+  <g id="i-pen"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></g>
+  <g id="i-folder"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></g>
+  <g id="i-folder-plus"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M12 11v5M9.5 13.5h5"/></g>
+  <g id="i-cloud"><path d="M6.5 18a4.5 4.5 0 0 1 .3-9 6 6 0 0 1 11.4 1.6A3.9 3.9 0 0 1 17.5 18z"/></g>
+  <g id="i-clock"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></g>
+  <g id="i-pin"><path d="M12 17v5"/><path d="M9 3h6l-1 6 3 3v2H7v-2l3-3z"/></g>
+  <g id="i-check"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></g>
+  <g id="i-cal"><rect x="3.5" y="5" width="17" height="15.5" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></g>
+  <g id="i-tree"><path d="M4 6h6M4 12h9M4 18h13"/></g>
+  <g id="i-more"><circle cx="5.5" cy="12" r="1.4"/><circle cx="12" cy="12" r="1.4"/><circle cx="18.5" cy="12" r="1.4"/></g>
+  <g id="i-msg"><path d="M20 15a2 2 0 0 1-2 2H8l-4 4V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2z"/></g>
+  <g id="i-alert"><path d="M12 4.5 21 19H3z"/><path d="M12 10v4M12 16.5v.5"/></g>
+  <g id="i-copy"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></g>
+  <g id="i-share"><path d="M12 15V4"/><path d="M8 8l4-4 4 4"/><path d="M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></g>
+  <g id="i-trash"><path d="M4 7h16M9 7V5h6v2M6.5 7l1 13h9l1-13"/></g>
+  <g id="i-print"><path d="M7 9V4h10v5"/><rect x="4" y="9" width="16" height="7" rx="2"/><path d="M7 16h10v5H7z"/></g>
+  <g id="i-doc-empty"><path d="M14 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8z"/><path d="M14 4v4h4"/></g>
+</defs></svg>
+
+<header>
+  <p class="eyebrow">SimpleMark · design wireframe</p>
+  <h1>The iPhone: three panes become a stack, one rail becomes a sheet</h1>
+  <p class="standfirst">
+    The desktop's Library, Notes and Document panes cannot sit side by side at 390pt. They become a
+    <strong>navigation stack</strong>. The Library rail becomes a <strong>sheet</strong>, which satisfies the
+    no-permanent-rail rule for free. Nothing collaborative gains a surface it does not already have.
+  </p>
+  <p class="sources">
+    Companion to <code>wireframe.html</code>, <code>wireframe-bear.html</code> and
+    <code>wireframe-collaboration.html</code>. Governed by <code>DESIGN.md</code> §6 &amp; §10.1,
+    <code>NATIVE-WORKSPACE.md</code>, <code>BEAR-INSPIRED-EDITING.md</code>, and ADR-0001/0003/0006.
+    Revised after the first working iOS build — §4 records what that build proved.
+  </p>
+</header>
+
+<div class="rule">
+  <strong>The storage decision this wireframe assumes.</strong> SimpleMark owns one iCloud Drive folder,
+  published to the Files app. Bring-your-own-cloud — pointing the app at an existing Dropbox, Drive or
+  iCloud folder — remains the goal and is <em>not</em> drawn here as if it worked. iOS hands an app a
+  security-scoped bookmark rather than a folder, and third-party File Providers may refuse to enumerate
+  in the background.
+  <span class="cite">The open question in <code>DESIGN.md</code> §12 stays open; §5 below records what would have to be true.</span>
+</div>
+
+<h2><span class="num">1</span>The stack</h2>
+<p class="lede">
+  Nine states. Six ship first; two are platform truths that must have a screen; one is a later capability.
+</p>
+
+<div class="stepper" role="group" aria-label="Screen">
+  <button type="button" data-step="first" aria-pressed="true">First run</button>
+  <button type="button" data-step="recent" aria-pressed="false">Recent</button>
+  <button type="button" data-step="library" aria-pressed="false">Library sheet</button>
+  <button type="button" data-step="folder" aria-pressed="false">Folder</button>
+  <button type="button" data-step="document" aria-pressed="false">Document</button>
+  <button type="button" data-step="correct" aria-pressed="false">Correcting</button>
+  <button type="button" data-step="more" aria-pressed="false">More menu</button>
+  <button type="button" data-step="note" aria-pressed="false">Anchored note</button>
+  <button type="button" data-step="conflict" aria-pressed="false">Conflict</button>
+  <button type="button" class="later" data-step="live" aria-pressed="false">Later: live</button>
+</div>
+
+<div class="stage">
+<section class="phone" aria-label="SimpleMark iPhone wireframe">
+  <div class="statusbar" aria-hidden="true">
+    <span>9:41</span><span class="island"></span><span class="right">iCloud</span>
+  </div>
+
+  <!-- FIRST RUN -->
+  <div class="screen on" data-view="first">
+    <nav class="nav">
+      <div class="lead"></div>
+      <div class="nav-title">SimpleMark</div>
+      <div class="trail"></div>
+    </nav>
+    <div class="body">
+      <div class="empty">
+        <svg class="glyph ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3"
+             stroke-linecap="round" stroke-linejoin="round" style="width:46px;height:46px"><use href="#i-doc-empty"/></svg>
+        <h4>No notes yet</h4>
+        <p>SimpleMark keeps ordinary Markdown files in its own iCloud folder, so the same notes are on your Mac and visible in the Files app.</p>
+        <p class="where">iCloud Drive › SimpleMark</p>
+        <button class="cta" type="button">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-pen"/></svg>
+          Write your first note
+        </button>
+        <button class="cta ghost" type="button">Bring a file in from Files…</button>
+      </div>
+    </div>
+    <div class="foot"><span>Nothing is stored outside this folder</span></div>
+  </div>
+
+  <!-- RECENT -->
+  <div class="screen" data-view="recent">
+    <nav class="nav">
+      <div class="lead"></div>
+      <button class="act plain" type="button">Recent Notes
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><use href="#i-chev-down"/></svg>
+      </button>
+      <div class="trail">
+        <button class="act icon" type="button" aria-label="Bring in a file">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-file-plus"/></svg>
+        </button>
+        <button class="act icon" type="button" aria-label="New note">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-pen"/></svg>
+        </button>
+      </div>
+    </nav>
+    <div class="body">
+      <div class="large-title">Recent Notes</div>
+      <div class="search">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><use href="#i-search"/></svg>
+        <span>Search notes</span>
+      </div>
+      <div class="rows">
+        <article class="row sel"><strong>Architecture review</strong><time>Now</time>
+          <p>The transport question is still open. Two candidates survive…</p>
+          <div class="meta" style="color:var(--accent)"><span class="dot note"></span>1 open note</div></article>
+        <article class="row"><strong>Q3 planning</strong><time>Yesterday</time>
+          <p>Three deliverables, one of which is a spike.</p></article>
+        <article class="row"><strong>Vendor comparison</strong><time>Mon</time>
+          <p>Pricing table rebuilt from the three quotes.</p>
+          <div class="meta"><span class="dot"></span>Codex edited · 2 changes</div></article>
+        <article class="row"><strong>Meeting notes — Tuesday</strong><time>Aug 4</time>
+          <p>Clarify the export path before the pilot.</p></article>
+      </div>
+    </div>
+    <div class="foot">
+      <span>12 recent notes</span>
+      <span style="display:flex;align-items:center;gap:5px">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round" style="width:13px;height:13px"><use href="#i-cloud"/></svg>
+        Synced · just now
+      </span>
+    </div>
+  </div>
+
+  <!-- LIBRARY SHEET -->
+  <div class="screen" data-view="library">
+    <nav class="nav" style="opacity:.5">
+      <div class="lead"></div><div class="nav-title">Recent Notes</div><div class="trail"></div>
+    </nav>
+    <div class="body" style="opacity:.5">
+      <div class="large-title">Recent Notes</div>
+      <div class="rows">
+        <article class="row sel"><strong>Architecture review</strong><time>Now</time>
+          <p>The transport question is still open.</p></article>
+      </div>
+    </div>
+    <div class="foot" style="opacity:.5"><span>12 recent notes</span></div>
+    <div class="scrim"></div>
+    <section class="sheet" aria-label="Library">
+      <div class="grab"></div>
+      <div class="sheet-head"><strong>Library</strong><span>Done</span></div>
+
+      <div class="sec">Your notes</div>
+      <div class="scope cur">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-cloud"/></svg>
+        <span>SimpleMark · iCloud</span><span class="n">41</span>
+      </div>
+
+      <div class="sec">Views</div>
+      <div class="scope">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-clock"/></svg>
+        <span>Recent Notes</span><span class="n">12</span>
+      </div>
+      <div class="scope">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-pin"/></svg>
+        <span>Pinned</span><span class="n">3</span>
+      </div>
+      <div class="scope off">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-cal"/></svg>
+        <span>Today</span><span class="n">later</span>
+      </div>
+      <div class="scope off">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>
+        <span>Todo</span><span class="n">later</span>
+      </div>
+
+      <div class="sec">Folders inside SimpleMark</div>
+      <div class="scope">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-folder"/></svg>
+        <span>project-notes</span><span class="n">28</span>
+      </div>
+      <div class="scope tall off">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-folder-plus"/></svg>
+        <span>Use a folder outside SimpleMark</span><span class="n">not yet</span>
+        <small>iOS grants a bookmark, not a folder, and other providers may not list files in the background. Until that is proven, this would be a promise the platform does not keep.</small>
+      </div>
+    </section>
+  </div>
+
+  <!-- FOLDER -->
+  <div class="screen" data-view="folder">
+    <nav class="nav">
+      <div class="lead">
+        <button class="act" type="button">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-left"/></svg>Library
+        </button>
+      </div>
+      <button class="act plain" type="button">project-notes
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px"><use href="#i-chev-down"/></svg>
+      </button>
+      <div class="trail">
+        <button class="act icon" type="button" aria-label="New note">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-pen"/></svg>
+        </button>
+      </div>
+    </nav>
+    <div class="body">
+      <div class="large-title">project-notes</div>
+      <div class="search">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><use href="#i-search"/></svg>
+        <span>Search this folder</span>
+      </div>
+      <div class="rows">
+        <article class="row sel"><strong>Architecture review</strong><time>Now</time>
+          <p>The transport question is still open. Two candidates survive…</p></article>
+        <article class="row"><strong>Phase 1 acceptance</strong><time>Today</time>
+          <p>The ten-step proof and native evidence.</p></article>
+        <article class="row"><strong>Release contract</strong><time>Yesterday</time>
+          <p>Signing, updates, and installed-build trust.</p></article>
+        <article class="row"><strong>External changes</strong><time>Aug 4</time>
+          <p>One accepted transaction stream for every writer.</p></article>
+      </div>
+    </div>
+    <div class="foot"><span>28 Markdown files · direct children</span></div>
+  </div>
+
+  <!-- DOCUMENT -->
+  <div class="screen" data-view="document">
+    <nav class="nav">
+      <div class="lead">
+        <button class="act" type="button">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-left"/></svg>project-notes
+        </button>
+      </div>
+      <div class="nav-title">Architecture review<small>Saved · just now</small></div>
+      <div class="trail">
+        <button class="act icon" type="button" aria-label="Contents">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-tree"/></svg>
+        </button>
+        <button class="act icon" type="button" aria-label="More">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+               stroke-linecap="round" stroke-linejoin="round"><use href="#i-more"/></svg>
+        </button>
+      </div>
+    </nav>
+    <article class="doc">
+      <h4>Architecture review</h4>
+      <div class="path">architecture-review.md · project-notes</div>
+      <p>The transport question is still open. Two candidates survive the first pass, and
+        <span class="anchor">the difference between them is operational rather than theoretical</span>
+        — which is the part worth deciding.</p>
+      <h5>The authority boundary</h5>
+      <p>A single authority orders accepted changes, so the page stays inspectable without surrounding it with machinery.</p>
+      <div class="diagram">Markdown file → accepted change → rendered document</div>
+    </article>
+    <div class="tools">
+      <button class="tool note" type="button">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px"><use href="#i-msg"/></svg>
+        <span>1 Note</span></button>
+      <button class="tool" type="button"><span style="font-family:var(--serif);font-size:16px">Aa</span><span>Style</span></button>
+      <button class="tool primary" type="button">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+             stroke-linecap="round" stroke-linejoin="round" style="width:17px;height:17px"><use href="#i-pen"/></svg>
+        <span>Correct</span></button>
+    </div>
+  </div>
+
+  <!-- CORRECTING -->
+  <div class="screen" data-view="correct">
+    <nav class="nav">
+      <div class="lead"><button class="act" type="button">Cancel</button></div>
+      <div class="nav-title">Architecture review<small style="color:var(--accent)">Editing · unsaved</small></div>
+      <div class="trail"><button class="act strong" type="button">Done</button></div>
+    </nav>
+    <article class="doc" style="padding-bottom:8px">
+      <h4>Architecture review</h4>
+      <div class="path">architecture-review.md · project-notes</div>
+      <p>The transport question is still open. Two candidates survive the first pass, and
+        <span class="anchor">the difference between them is operational</span> rather than
+        theoretical<span class="caret"></span></p>
+      <h5>The authority boundary</h5>
+      <p>A single authority orders accepted changes.</p>
+    </article>
+    <div>
+      <div class="styles">
+        <button type="button">H</button>
+        <button type="button">☰</button>
+        <button type="button">☑</button>
+        <button type="button" style="font-weight:700">B</button>
+        <button type="button" style="font-style:italic;font-family:var(--serif)">I</button>
+        <button type="button">🔗</button>
+        <button type="button">▦</button>
+        <button type="button">
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+               stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><use href="#i-more"/></svg>
+        </button>
+      </div>
+      <div class="keyboard">keyboard</div>
+    </div>
+  </div>
+
+  <!-- MORE MENU -->
+  <div class="screen" data-view="more">
+    <nav class="nav" style="opacity:.5">
+      <div class="lead"><button class="act" type="button">project-notes</button></div>
+      <div class="nav-title">Architecture review</div><div class="trail"></div>
+    </nav>
+    <article class="doc" style="opacity:.5">
+      <h4>Architecture review</h4>
+      <div class="path">architecture-review.md · project-notes</div>
+      <p>The transport question is still open. Two candidates survive the first pass.</p>
+    </article>
+    <div class="tools" style="opacity:.5"><button class="tool" type="button"><span>Aa</span><span>Style</span></button></div>
+    <div class="scrim"></div>
+    <section class="sheet" aria-label="More">
+      <div class="grab"></div>
+      <div class="sheet-head"><strong>Architecture review</strong><span>Done</span></div>
+      <div class="menu-row">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-pen"/></svg><span>Rename…</span><span></span>
+      </div>
+      <div class="menu-row">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-copy"/></svg><span>Copy as Markdown</span><span></span>
+      </div>
+      <div class="menu-row">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-copy"/></svg><span>Copy as Rich Text</span><span></span>
+      </div>
+      <div class="menu-row">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-share"/></svg><span>Share…</span><span class="why">iOS share sheet</span>
+      </div>
+      <div class="menu-row">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-folder"/></svg><span>Show in Files</span><span></span>
+      </div>
+      <div class="menu-row off">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-trash"/></svg><span>Delete</span><span class="why">iOS has no Trash — delete in Files</span>
+      </div>
+      <div class="menu-row off">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-print"/></svg><span>Print</span><span class="why">not yet</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- ANCHORED NOTE -->
+  <div class="screen" data-view="note">
+    <nav class="nav" style="opacity:.5">
+      <div class="lead"><button class="act" type="button">project-notes</button></div>
+      <div class="nav-title">Architecture review</div><div class="trail"></div>
+    </nav>
+    <article class="doc" style="opacity:.5">
+      <h4>Architecture review</h4>
+      <div class="path">architecture-review.md · project-notes</div>
+      <p>The transport question is still open, and <span class="anchor">the difference between them is
+        operational rather than theoretical</span> — which is the part worth deciding.</p>
+    </article>
+    <div class="tools" style="opacity:.5"><button class="tool note" type="button"><span>1 Note</span></button></div>
+    <div class="scrim"></div>
+    <section class="sheet" aria-label="Anchored note">
+      <div class="grab"></div>
+      <div class="sheet-head"><strong>Note</strong><span>Done</span></div>
+      <div class="anchor-ctx">“the difference between them is operational rather than theoretical”</div>
+      <div class="msg"><span class="who">You</span><span>Split this by region before the customer call?</span></div>
+      <div class="thread-acts">
+        <button class="tact primary" type="button">Resolve</button>
+        <button class="tact" type="button">Keep as note</button>
+        <span class="tmeta">stored outside the .md</span>
+      </div>
+    </section>
+  </div>
+
+  <!-- CONFLICT -->
+  <div class="screen" data-view="conflict">
+    <nav class="nav">
+      <div class="lead"><button class="act" type="button">
+        <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+             stroke-linecap="round" stroke-linejoin="round"><use href="#i-chev-left"/></svg>project-notes
+      </button></div>
+      <div class="nav-title">Architecture review</div>
+      <div class="trail"></div>
+    </nav>
+    <div class="banner">
+      <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+           stroke-linecap="round" stroke-linejoin="round" style="width:15px;height:15px"><use href="#i-alert"/></svg>
+      <span><b>This note changed in two places.</b> Nothing has been merged.</span>
+    </div>
+    <article class="doc" style="opacity:.5;padding-top:18px">
+      <h4>Architecture review</h4>
+      <div class="path">architecture-review.md · project-notes</div>
+      <p>The transport question is still open.</p>
+    </article>
+    <div class="scrim" style="inset:126px 0 0"></div>
+    <section class="sheet" aria-label="Resolve a conflict">
+      <div class="grab"></div>
+      <div class="sheet-head"><strong>Two versions</strong><span style="color:var(--quiet)">Nothing merged</span></div>
+      <div class="versions">
+        <div class="version">
+          <div class="k">On this iPhone · unsaved</div>
+          <p>…the difference between them is operational rather than theoretical, and the pilot decides it.</p>
+        </div>
+        <div class="version">
+          <div class="k">From iCloud · 3 minutes ago</div>
+          <p>…the difference between them is operational, not theoretical — which the customer call settles.</p>
+        </div>
+      </div>
+      <div class="thread-acts">
+        <button class="tact primary" type="button">Keep both</button>
+        <button class="tact" type="button">Keep mine</button>
+        <button class="tact" type="button">Use iCloud's</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- LATER: LIVE -->
+  <div class="screen" data-view="live">
+    <nav class="nav" style="opacity:.5">
+      <div class="lead"><button class="act" type="button">project-notes</button></div>
+      <div class="nav-title">Architecture review</div><div class="trail"></div>
+    </nav>
+    <article class="doc" style="opacity:.5">
+      <h4>Architecture review</h4>
+      <div class="path">architecture-review.md · project-notes</div>
+      <p>The transport question is still open, and <span class="anchor">the difference between them is
+        operational rather than theoretical</span>.</p>
+      <div class="agent-status"><span class="dot"></span>Codex is drafting a diagram…</div>
+    </article>
+    <div class="tools" style="opacity:.5"><button class="tool note" type="button"><span>Live</span></button></div>
+    <div class="scrim"></div>
+    <section class="sheet" aria-label="Passage conversation">
+      <div class="grab"></div>
+      <div class="sheet-head"><strong>Passage conversation</strong><span style="color:var(--agent)">Later</span></div>
+      <div class="anchor-ctx">“the difference between them is operational rather than theoretical”</div>
+      <div class="msg"><span class="who a">Codex</span><span>I'm turning this into a three-step system diagram.</span></div>
+      <div class="msg"><span class="who">You</span><span>Keep Markdown at the centre. Hide the sync machinery.</span></div>
+      <div class="thread-acts">
+        <button class="tact control" type="button">Redirect now</button>
+        <button class="tact" type="button">Leave note</button>
+        <span class="tmeta">same anchor</span>
+      </div>
+    </section>
+  </div>
+</section>
+
+<div class="notes-col">
+  <div class="note-card state-note on changed" data-note="first">
+    <div class="k">New in this revision</div>
+    <p><strong>This screen did not exist before, and it is the one the shipped build is stuck on.</strong>
+      The iOS app currently boots to a welcome placeholder whose row is not a real file, so tapping it
+      does nothing and there is no way forward.</p>
+    <p>Two ways out, both honest: write a note, or bring one in. Neither pretends a folder was chosen —
+      the folder is a fact of the platform, so the screen states where notes live rather than asking.</p>
+  </div>
+  <div class="note-card state-note" data-note="recent">
+    <div class="k">Changed</div>
+    <p><strong>“Edit” is gone.</strong> In iOS convention it means multi-select and delete, and iOS has
+      no Trash for an app to move a document into. Keeping it would advertise a capability the platform
+      refuses.</p>
+    <p><strong>The duplicate scope control is gone.</strong> The title chevron and the old footer button
+      opened the same sheet. The footer now carries sync state instead — the one thing a person cannot
+      otherwise know.</p>
+  </div>
+  <div class="note-card state-note changed" data-note="library">
+    <div class="k">Changed — the storage decision</div>
+    <p><strong>SimpleMark's own iCloud folder is now the first row</strong>, because it is where notes
+      actually are. Folders are folders <em>inside</em> it.</p>
+    <p><strong>“Add Folder from Files” is demoted to a disabled row with its reason written on it.</strong>
+      It previously promised iCloud, Dropbox, OneDrive “or any Files provider”. Bring-your-own-cloud stays
+      the goal; the row says why it is not here yet instead of implying it works.</p>
+    <span class="cite">DESIGN.md §12 open question · ADR-0006 provider-neutral materialization</span>
+  </div>
+  <div class="note-card state-note" data-note="folder">
+    <div class="k">Changed</div>
+    <p>Back now reads <strong>Library</strong> rather than a dead end, so the stack is complete in both
+      directions: Library → Folder → Document.</p>
+    <p>The old “Folder access” footer button is gone with the arbitrary-folder capability it belonged to.</p>
+  </div>
+  <div class="note-card state-note changed" data-note="document">
+    <div class="k">Changed</div>
+    <p><strong>A save state now sits under the title.</strong> The desktop titlebar has always shown
+      “Saved · 14:22”; the phone dropped it. With iCloud in the loop and D7 fidelity at stake, a person
+      has to know their correction landed.</p>
+    <p>Back is labelled with the folder it returns to, which is what makes this a stack rather than a
+      hidden pane.</p>
+  </div>
+  <div class="note-card state-note changed" data-note="correct">
+    <div class="k">New</div>
+    <p><strong>Correcting had no frame at all.</strong> “Correct” was drawn as a button with no state
+      behind it and no way back.</p>
+    <p>Cancel and Done bracket the edit; the styles bar rides above the keyboard rather than becoming a
+      permanent ribbon. That is Bear's restraint, which
+      <code class="inline">BEAR-INSPIRED-EDITING.md</code> already adopts: the document stays dominant and
+      the tools appear when the cursor needs them.</p>
+    <span class="cite">BEAR-INSPIRED-EDITING.md · styles bar, progressive disclosure</span>
+  </div>
+  <div class="note-card state-note changed" data-note="more">
+    <div class="k">New</div>
+    <p><strong>This is where the macOS menu bar went</strong>, and it was previously an unspecified “⋯”.</p>
+    <p>Two rows are deliberately disabled with their reasons visible: <strong>Delete</strong>, because iOS
+      has no Trash — the shipped build already returns that as a named limitation rather than failing
+      silently — and <strong>Print</strong>, because iOS printing is
+      <code class="inline">UIPrintInteractionController</code>, not a webview call.</p>
+    <span class="cite">Named limitations, not silent no-ops</span>
+  </div>
+  <div class="note-card state-note" data-note="note">
+    <div class="k">Unchanged</div>
+    <p>Already right. The anchored note is a sheet over the passage, carries its anchor text, and says
+      out loud that it is <strong>stored outside the .md</strong> — which is what keeps D7 true.</p>
+  </div>
+  <div class="note-card state-note changed" data-note="conflict">
+    <div class="k">New — and required</div>
+    <p><strong>ADR-0006 requires this screen and it did not exist.</strong> A conflicted copy is a new
+      file and never silently enters the stream; overlapping unsaved state demands an explicit
+      keep / import / merge decision.</p>
+    <p>The banner is the general error surface too — “changed on disk by another program”, “could not
+      open file”. In the shipped build those messages are written into an element the phone stylesheet
+      hides, so failures are invisible. A message nobody can see is not a message.</p>
+    <span class="cite">ADR-0006 · one authoritative accepted-change stream</span>
+  </div>
+  <div class="note-card state-note" data-note="live">
+    <div class="k">Unchanged · later capability</div>
+    <p>Redirect now is control; Leave note is communication. The distinction survives the platform change
+      because it was never about screen size.</p>
+    <span class="cite">COLLABORATION.md §1.1 · SWITCHBOARD-KERNEL.md §1</span>
+  </div>
+</div>
+</div>
+
+<h2><span class="num">2</span>What each desktop pane becomes</h2>
+<div class="scroll">
+<table class="matrix">
+  <thead><tr><th style="width:22%">Desktop</th><th style="width:26%">iPhone</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Library rail</strong> (left)</td><td>Bottom sheet, summoned from the title</td>
+      <td>A permanent rail costs a third of the screen. As a sheet it satisfies DESIGN §10.1 without an exception.</td></tr>
+    <tr><td><strong>Notes pane</strong> (middle)</td><td>The root list</td>
+      <td>It is the only pane that survives as itself; a phone list <em>is</em> a note index.</td></tr>
+    <tr><td><strong>Document</strong> (right)</td><td>A pushed screen with a labelled back</td>
+      <td>The two cannot share a row at 390pt, so selection has to navigate rather than reveal.</td></tr>
+    <tr><td><strong>Menu bar</strong></td><td>The ⋯ sheet</td>
+      <td>No menu bar exists. Commands that the platform refuses stay visible and disabled with a reason.</td></tr>
+    <tr><td><strong>Title bar save state</strong></td><td>Subtitle under the document title</td>
+      <td>Same information, the only place a 50pt nav bar has room for it.</td></tr>
+    <tr><td><strong>Formatting palette</strong></td><td>Keyboard accessory in Correcting</td>
+      <td>Tools appear when the cursor needs them, then leave.</td></tr>
+    <tr><td class="no"><strong>An agent rail</strong></td><td class="no">— still never exists</td>
+      <td class="no">DESIGN §10.1. Nothing about a smaller screen changes it.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="num">3</span>What the first working iOS build proved</h2>
+<p class="lede">
+  These are not predictions. Each was observed on device during the first successful
+  <code class="inline">tauri ios build</code>, and each constrains the design above.
+</p>
+
+<div class="rule warn">
+  <strong>An absolute path is not a stable identity on iOS.</strong> The app's data container UUID changes
+  on reinstall — observed moving across three UUIDs in one session — and will change again on update or
+  restore. <code>WorkspaceCatalogPort</code> currently documents the native handle as “the canonical
+  absolute path”. On iOS that is false, and any persisted handle must be stored relative to the container
+  and resolved at load time.
+  <span class="cite">Consequence: every screen above stores note and folder handles as container-relative paths, never absolute ones.</span>
+</div>
+
+<div class="scroll">
+<table class="matrix">
+  <thead><tr><th style="width:30%">Observed</th><th>What the design does about it</th></tr></thead>
+  <tbody>
+    <tr><td>Container UUID changes between installs</td><td>Handles are container-relative; nothing persists an absolute path.</td></tr>
+    <tr><td>No Trash exists for an app document</td><td>Delete is a disabled row in ⋯ with its reason, and points at Files.</td></tr>
+    <tr><td>No file watcher — <code class="inline">notify</code> has no iOS backend</td><td>Conflict screen is required, because changes arrive without warning. A watcher is <code class="inline">NSFilePresenter</code> work, not a port change.</td></tr>
+    <tr><td>Errors are written into an element the phone hides</td><td>The banner in §1 is the error surface, above the document and impossible to miss.</td></tr>
+    <tr><td class="yes">Document picker reaches the app's own folder</td><td class="yes">“Bring a file in from Files…” on first run is proven to work.</td></tr>
+    <tr><td class="yes">File associations carry over from <code class="inline">tauri.conf.json</code></td><td class="yes">Markdown opened elsewhere can hand off to SimpleMark.</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h2><span class="num">4</span>What would have to be true for bring-your-own-cloud</h2>
+<p class="lede">The disabled row in the Library sheet is a placeholder for this list, not a decision against it.</p>
+<div class="scroll">
+<table class="matrix">
+  <thead><tr><th style="width:34%">Requirement</th><th>Status</th></tr></thead>
+  <tbody>
+    <tr><td>Handles survive as security-scoped bookmarks, resolved and re-scoped on every access</td><td>Port contract change; not started</td></tr>
+    <tr><td>A third-party File Provider will enumerate a folder's direct children on demand</td><td class="no">Unverified — the open question in DESIGN.md §12</td></tr>
+    <tr><td>External writes are observable through <code class="inline">NSFilePresenter</code> outside the app's own container</td><td class="no">Unverified</td></tr>
+    <tr><td>A materialization group can be paired across Mac and phone without inferring it from a path</td><td>Designed in ADR-0006; unbuilt</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="caption">
+  Until the two unverified rows are answered on a real device with a real provider, the honest product is
+  one folder the application owns. That is a smaller promise, and it is one iOS actually keeps.
+</p>
+
+</div>
+
+<script>
+  (() => {
+    const steps = Array.from(document.querySelectorAll('[data-step]'));
+    const screens = Array.from(document.querySelectorAll('[data-view]'));
+    const notes = Array.from(document.querySelectorAll('[data-note]'));
+    const show = (name) => {
+      for (const b of steps) b.setAttribute('aria-pressed', String(b.dataset.step === name));
+      for (const s of screens) s.classList.toggle('on', s.dataset.view === name);
+      for (const n of notes) n.classList.toggle('on', n.dataset.note === name);
+    };
+    for (const b of steps) b.addEventListener('click', () => show(b.dataset.step));
+  })();
+</script>
+</body>
+</html>

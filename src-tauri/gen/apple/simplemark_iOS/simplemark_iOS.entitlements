@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  iCloud Documents, and nothing else.
+
+	  The container holds the same ordinary Markdown files the desktop app
+	  writes; iCloud replicates the bytes and is never asked to order changes or
+	  merge them (ADR-0006). Only `CloudDocuments` is requested — no key-value
+	  store, no CloudKit — because an entitlement this app cannot justify is one
+	  the provisioning profile has to carry forever.
+	-->
+	<key>com.apple.developer.icloud-container-identifiers</key>
+	<array>
+		<string>iCloud.app.simplemark.ios</string>
+	</array>
+	<key>com.apple.developer.ubiquity-container-identifiers</key>
+	<array>
+		<string>iCloud.app.simplemark.ios</string>
+	</array>
+	<key>com.apple.developer.icloud-services</key>
+	<array>
+		<string>CloudDocuments</string>
+	</array>
+</dict>
+</plist>

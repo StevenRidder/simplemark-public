@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SimpleMark — calm document wireframe</title>
+<style>
+  :root {
+    color-scheme: light;
+    --app: #eeece7;
+    --window: #fbfaf7;
+    --paper: #fffefa;
+    --ink: #262521;
+    --soft-ink: #716e67;
+    --quiet: #a5a197;
+    --line: #e8e5de;
+    --toolbar: #f7f5f0;
+    --hover: #efede7;
+    --selection: #e7dfd1;
+    --accent: #a66a2d;
+    --accent-soft: #f6e7d2;
+    --change: #e9f0df;
+    --code: #292a28;
+    --sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+    --serif: "Iowan Old Style", "New York", Georgia, serif;
+    --mono: "SFMono-Regular", Consolas, monospace;
+    --shadow: 0 24px 76px rgba(45, 41, 33, .17), 0 2px 6px rgba(45, 41, 33, .08);
+  }
+  body[data-theme="white"] {
+    color-scheme: light;
+    --app: #f5f5f4;
+    --window: #ffffff;
+    --paper: #ffffff;
+    --ink: #252525;
+    --soft-ink: #6f6f6d;
+    --quiet: #a1a19f;
+    --line: #e9e9e7;
+    --toolbar: #fafafa;
+    --hover: #f1f1f0;
+    --selection: #e8e8e5;
+    --accent: #906128;
+    --accent-soft: #f6eadb;
+    --change: #eaf1e4;
+    --diagram: #fafaf9;
+    --diagram-line: #e7e5df;
+    --node-line: #dfddd7;
+    --node-ink: #575750;
+    --node-primary: #fff5e9;
+    --node-primary-line: #dac2a6;
+    --node-primary-ink: #83501d;
+    --sheet: rgba(255,255,255,.98);
+    --sheet-field: #f7f7f5;
+    --control-line: #e7e5df;
+    --shadow: 0 24px 76px rgba(38, 38, 35, .13), 0 2px 6px rgba(38, 38, 35, .06);
+  }
+  body[data-theme="tan"] {
+    color-scheme: light;
+    --diagram: #f8f6f1;
+    --diagram-line: #ebe6dc;
+    --node-line: #ddd9cf;
+    --node-ink: #57544d;
+    --node-primary: #fff5e8;
+    --node-primary-line: #d8bc9d;
+    --node-primary-ink: #85501d;
+    --sheet: rgba(255,254,250,.98);
+    --sheet-field: #f8f6f1;
+    --control-line: #e5e1d9;
+  }
+  body[data-theme="night"] {
+    color-scheme: dark;
+    --app: #151615;
+    --window: #20211f;
+    --paper: #242522;
+    --ink: #f1f0ea;
+    --soft-ink: #b8b6ae;
+    --quiet: #85847c;
+    --line: #383936;
+    --toolbar: #1c1d1b;
+    --hover: #30312e;
+    --selection: #48443b;
+    --accent: #e0a15b;
+    --accent-soft: #4c3a26;
+    --change: #283423;
+    --code: #141513;
+    --diagram: #292a27;
+    --diagram-line: #3c3d39;
+    --node-line: #4a4b46;
+    --node-ink: #d6d4cb;
+    --node-primary: #423324;
+    --node-primary-line: #775a3c;
+    --node-primary-ink: #f0c384;
+    --sheet: rgba(36,37,34,.98);
+    --sheet-field: #1b1c1a;
+    --control-line: #393a37;
+    --shadow: 0 24px 76px rgba(0,0,0,.48), 0 2px 6px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { margin: 0; background: var(--app); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; }
+  button { font: inherit; color: inherit; cursor: pointer; }
+
+  .stage { min-height: 100%; padding: 28px; display: grid; place-items: center; }
+  .window { width: min(1280px, 100%); height: min(850px, calc(100vh - 56px)); min-height: 630px; display: flex; flex-direction: column; overflow: hidden; background: var(--window); border: 1px solid rgba(74, 70, 61, .13); border-radius: 15px; box-shadow: var(--shadow); }
+
+  .titlebar { height: 52px; flex: 0 0 52px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 13px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--window) 88%, transparent); }
+  .title-left, .title-right { display: flex; align-items: center; gap: 5px; }
+  .title-right { justify-content: flex-end; }
+  .lights { display: flex; gap: 7px; margin-right: 12px; }
+  .lights span { width: 11px; height: 11px; border-radius: 50%; background: #dedbd4; }
+  .lights span:nth-child(1) { background: #ff6158; } .lights span:nth-child(2) { background: #ffbd2e; } .lights span:nth-child(3) { background: #29c941; }
+  .icon, .small-action { height: 30px; border: 0; border-radius: 7px; background: transparent; color: var(--soft-ink); display: grid; place-items: center; }
+  .icon { width: 30px; }
+  .icon:hover, .small-action:hover { background: var(--hover); color: var(--ink); }
+  svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; }
+  .doc-name { display: grid; place-items: center; gap: 1px; font-size: 12px; font-weight: 650; letter-spacing: -.01em; }
+  .doc-name small { color: var(--quiet); font-size: 9.5px; font-weight: 500; }
+  .save-state { color: #6f8c5e; font-size: 10.5px; margin-right: 5px; }
+  .save-state::before { content: ""; display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: currentColor; vertical-align: 1px; }
+
+  .formatbar { height: 43px; flex: 0 0 43px; display: flex; align-items: center; justify-content: center; gap: 3px; padding: 5px 13px; border-bottom: 1px solid var(--line); background: var(--toolbar); }
+  .format-group { display: flex; align-items: center; gap: 1px; padding: 2px; border: 1px solid var(--control-line); border-radius: 8px; background: color-mix(in srgb, var(--paper) 80%, transparent); }
+  .format-button { min-width: 29px; height: 27px; display: grid; place-items: center; padding: 0 7px; border: 0; border-radius: 5px; background: transparent; color: var(--soft-ink); font-size: 12px; }
+  .format-button:hover, .format-button.active { background: var(--selection); color: var(--ink); }
+  .format-button.heading { min-width: 56px; justify-content: space-between; font: 600 12px var(--serif); }
+  .format-button strong { font-size: 13px; } .format-button em { font: italic 16px var(--serif); }
+  .divider { width: 1px; height: 20px; margin: 0 4px; background: var(--line); }
+  .format-hint { margin-left: 6px; color: var(--quiet); font-size: 10px; white-space: nowrap; }
+
+  .reader { position: relative; flex: 1; overflow: auto; scrollbar-color: var(--line) transparent; }
+  .page { width: min(720px, calc(100% - 64px)); margin: 0 auto; padding: 74px 0 140px; }
+  .block { position: relative; border-radius: 7px; transition: opacity .16s, background .16s, box-shadow .16s; }
+  .block.dragging { opacity: .42; background: var(--hover); }
+  .block.drop-before { box-shadow: 0 -2px 0 var(--accent); }
+  .block.drop-after { box-shadow: 0 2px 0 var(--accent); }
+  .block-grip { position: absolute; top: 10px; left: -39px; width: 25px; height: 25px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--quiet); opacity: 0; transform: translateX(3px); transition: opacity .14s, transform .14s, background .14s; cursor: grab; }
+  .block-grip:active { cursor: grabbing; }
+  .block:hover .block-grip, .block:focus-within .block-grip { opacity: 1; transform: translateX(0); }
+  .block-grip:hover { background: var(--hover); color: var(--soft-ink); }
+  .block-grip svg { width: 14px; height: 14px; stroke-width: 1.9; }
+  .insertion-zone { position: relative; height: 17px; margin: 3px 0; border-radius: 5px; }
+  .insertion-zone::before { content: ""; position: absolute; top: 8px; right: 0; left: 0; height: 1px; background: transparent; transition: background .14s; }
+  .insertion-zone:hover::before, .insertion-zone:focus-within::before { background: var(--accent); }
+  .insertion-zone.drop-target::before { background: var(--accent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 16%, transparent); }
+  .insert-block { position: absolute; z-index: 1; top: -3px; left: -30px; width: 21px; height: 21px; padding: 0; border: 0; border-radius: 6px; background: var(--paper); color: var(--quiet); font-size: 16px; line-height: 1; opacity: 0; transition: opacity .14s, color .14s; }
+  .insertion-zone:hover .insert-block, .insertion-zone:focus-within .insert-block { opacity: 1; color: var(--accent); }
+  .insertion-zone.end { height: 33px; margin-top: 8px; }
+  .insertion-zone.end::after { content: "Click to keep writing"; position: absolute; top: 2px; left: 2px; color: var(--quiet); font-size: 10.5px; opacity: .72; transition: color .14s; }
+  .insertion-zone.end:hover::after, .insertion-zone.end:focus-within::after { color: var(--accent); }
+  .eyebrow { margin: 0 0 9px; color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  h1 { margin: 0; font: 720 44px/1.08 var(--sans); letter-spacing: -.045em; }
+  .meta { margin: 12px 0 42px; color: var(--quiet); font-size: 12px; }
+  p { margin: 0 0 23px; font: 18px/1.7 var(--serif); letter-spacing: -.004em; }
+  h2 { margin: 47px 0 14px; font: 700 25px/1.22 var(--sans); letter-spacing: -.03em; }
+  .selection { padding: 1px 3px; margin: 0 -3px; border-radius: 3px; background: var(--accent-soft); }
+  .update { display: none; align-items: center; gap: 7px; margin: -8px 0 25px; padding: 8px 10px; border-radius: 8px; background: var(--change); color: #61734f; font-size: 11px; }
+  .update i { width: 6px; height: 6px; border-radius: 50%; background: #7f9a63; }
+  .update button { margin-left: auto; border: 0; background: transparent; color: inherit; font-size: 11px; font-weight: 650; }
+
+  .diagram { position: relative; margin: 31px 0 28px; padding: 38px 28px 31px; overflow: hidden; border: 1px solid var(--diagram-line); border-radius: 13px; background: var(--diagram); }
+  .diagram .kind { position: absolute; top: 12px; left: 14px; color: var(--quiet); font: 10px var(--mono); }
+  .diagram button { position: absolute; top: 8px; right: 9px; border: 0; border-radius: 5px; padding: 5px 7px; background: transparent; color: var(--soft-ink); font-size: 10.5px; }
+  .diagram button:hover { background: var(--paper); color: var(--ink); }
+  .flow { display: flex; align-items: center; justify-content: center; gap: 11px; min-height: 73px; }
+  .node { padding: 10px 13px; border: 1px solid var(--node-line); border-radius: 8px; background: var(--paper); color: var(--node-ink); font: 11px var(--mono); box-shadow: 0 1px 2px rgba(0,0,0,.03); }
+  .node.primary { border-color: var(--node-primary-line); background: var(--node-primary); color: var(--node-primary-ink); }
+  .arrow { color: var(--quiet); font-size: 17px; }
+  .code { margin: 28px 0; padding: 18px 20px; overflow: auto; border-radius: 11px; background: var(--code); color: #efeee9; font: 12px/1.65 var(--mono); }
+  .code .comment { color: #989d91; } .code .key { color: #dfbd83; }
+  .document-rule { height: 1px; margin: 42px 0 27px; background: var(--line); }
+  .quiet-note { color: var(--soft-ink); font-size: 15px; font-style: italic; }
+
+  .source-sheet { display: none; position: fixed; z-index: 8; top: 96px; right: 23px; width: min(450px, calc(100% - 46px)); height: 255px; min-width: 320px; min-height: 220px; max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); flex-direction: column; padding: 12px; overflow: auto; resize: both; border: 1px solid var(--control-line); border-radius: 12px; background: var(--sheet); box-shadow: 0 18px 50px rgba(43,37,28,.18); }
+  .source-sheet header { display: flex; align-items: center; justify-content: space-between; margin: -3px -3px 9px; padding: 5px 6px; border-radius: 6px; color: var(--soft-ink); font-size: 11px; font-weight: 650; cursor: grab; user-select: none; }
+  .source-sheet header:active { cursor: grabbing; }
+  .source-sheet header::after { content: "⋮⋮"; color: var(--quiet); font-size: 13px; letter-spacing: -2px; }
+  .source-sheet textarea { width: 100%; min-height: 120px; flex: 1; resize: none; padding: 10px; border: 1px solid var(--line); border-radius: 8px; outline: none; background: var(--sheet-field); color: var(--ink); font: 11px/1.55 var(--mono); }
+  .sheet-actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 9px; }
+  .sheet-actions button { border: 0; border-radius: 7px; padding: 6px 9px; background: transparent; color: var(--soft-ink); font-size: 11px; }
+  .sheet-actions .done { background: var(--ink); color: white; }
+  body[data-state="source"] .source-sheet { display: flex; }
+  body[data-state="changed"] .update { display: flex; }
+
+  .theme-menu { display: none; position: absolute; z-index: 5; top: 43px; right: 43px; width: 174px; padding: 6px; border: 1px solid var(--control-line); border-radius: 10px; background: var(--sheet); box-shadow: 0 14px 38px rgba(43,37,28,.18); }
+  .theme-menu.open { display: block; }
+  .theme-menu p { margin: 4px 6px 6px; color: var(--quiet); font: 650 9px var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+  .theme-choice { width: 100%; display: flex; align-items: center; gap: 8px; padding: 7px 8px; border: 0; border-radius: 7px; background: transparent; color: var(--soft-ink); font-size: 11px; text-align: left; }
+  .theme-choice:hover, .theme-choice.on { background: var(--hover); color: var(--ink); }
+  .swatch { width: 17px; height: 17px; border: 1px solid rgba(0,0,0,.12); border-radius: 5px; }
+  .swatch.white { background: #fff; } .swatch.tan { background: #ebe5d9; } .swatch.night { background: #242522; border-color: #5b5c56; }
+
+  .preview { position: fixed; z-index: 5; bottom: 11px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 3px; padding: 3px; border-radius: 9px; background: rgba(42,40,35,.88); box-shadow: 0 7px 24px rgba(0,0,0,.18); }
+  .preview span { padding: 0 7px; color: rgba(255,255,255,.5); font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+  .preview button { border: 0; border-radius: 6px; padding: 5px 8px; background: transparent; color: rgba(255,255,255,.68); font-size: 10.5px; }
+  .preview button.on { background: rgba(255,255,255,.16); color: white; }
+
+  @media (max-width: 760px) {
+    .stage { padding: 0; } .window { width: 100%; height: 100vh; min-height: 0; border: 0; border-radius: 0; }
+    .lights, .title-left .icon:first-of-type, .save-state, .format-hint { display: none; }
+    .formatbar { justify-content: flex-start; overflow-x: auto; } .format-group { flex: 0 0 auto; }
+    .page { width: calc(100% - 42px); padding-top: 48px; } h1 { font-size: 36px; } p { font-size: 17px; }
+    .block-grip, .insert-block { left: -26px; }
+    .diagram { padding-left: 12px; padding-right: 12px; } .flow { gap: 5px; } .node { padding: 8px; font-size: 9px; }
+  }
+</style>
+</head>
+<body data-state="reading" data-theme="tan">
+  <div class="stage">
+    <main class="window" aria-label="SimpleMark Bear-inspired document wireframe">
+      <header class="titlebar">
+        <div class="title-left">
+          <div class="lights" aria-hidden="true"><span></span><span></span><span></span></div>
+          <button class="icon" aria-label="Open another file" title="Open another file"><svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v9.5A1.5 1.5 0 0 1 18.5 20h-13A1.5 1.5 0 0 1 4 18.5z"/><path d="M4 7V5.5A1.5 1.5 0 0 1 5.5 4h5L12 6"/></svg></button>
+          <button class="small-action" aria-label="Back" title="Back" style="width:30px"><svg viewBox="0 0 24 24"><path d="m14.5 18-6-6 6-6"/></svg></button>
+        </div>
+        <div class="doc-name">system-design.md<small>Local file · ~/Documents</small></div>
+        <div class="title-right">
+          <span class="save-state">Saved</span>
+          <button class="icon" id="readerPreferences" aria-label="Reader preferences" aria-expanded="false" title="Reader preferences"><span style="font:600 15px var(--serif)">aA</span></button>
+          <button class="icon" aria-label="More document actions" title="More document actions"><svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1" fill="currentColor" stroke="none"/></svg></button>
+        </div>
+        <div class="theme-menu" id="themeMenu" aria-label="Reader appearance">
+          <p>Appearance</p>
+          <button class="theme-choice" data-theme-choice="white"><span class="swatch white"></span>White</button>
+          <button class="theme-choice on" data-theme-choice="tan"><span class="swatch tan"></span>Tan</button>
+          <button class="theme-choice" data-theme-choice="night"><span class="swatch night"></span>Night</button>
+        </div>
+      </header>
+
+      <nav class="formatbar" aria-label="Document formatting">
+        <div class="format-group">
+          <button class="format-button heading active" title="Heading level">Body <span>⌄</span></button>
+        </div>
+        <div class="format-group">
+          <button class="format-button" aria-label="Bold" title="Bold"><strong>B</strong></button>
+          <button class="format-button" aria-label="Italic" title="Italic"><em>I</em></button>
+          <button class="format-button" aria-label="Strikethrough" title="Strikethrough"><s>S</s></button>
+        </div>
+        <div class="format-group">
+          <button class="format-button" aria-label="Bulleted list" title="Bulleted list">☷</button>
+          <button class="format-button" aria-label="Checklist" title="Checklist">☑</button>
+          <button class="format-button" aria-label="Table" title="Table"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M9 4v16M15 4v16"/></svg></button>
+        </div>
+        <div class="format-group">
+          <button class="format-button" aria-label="Link" title="Link"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.1.1l2-2a5 5 0 0 0-7.1-7.1l-1.1 1.1"/><path d="M14 11a5 5 0 0 0-7.1-.1l-2 2A5 5 0 0 0 12 20l1.1-1.1"/></svg></button>
+          <button class="format-button" id="sourceButton" aria-label="Edit diagram source" title="Edit diagram source">⌘</button>
+        </div>
+        <span class="format-hint">Structure stays Markdown. The document stays a document.</span>
+      </nav>
+
+      <section class="reader">
+        <article class="page" id="documentPage">
+          <div class="block" draggable="true">
+            <button class="block-grip" aria-label="Move title block" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button>
+            <p class="eyebrow">SimpleMark</p><h1 contenteditable="true">The beautiful living document</h1><div class="meta">Updated by Codex 2 minutes ago · your local file</div>
+          </div>
+          <div class="insertion-zone"><button class="insert-block" aria-label="Add a block here">+</button></div>
+          <div class="block" draggable="true">
+            <button class="block-grip" aria-label="Move introduction block" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button>
+            <p contenteditable="true">Your agent writes the Markdown. SimpleMark turns the same local file into a document you can read, judge, and occasionally correct outside the coding environment.</p>
+          </div>
+          <div class="insertion-zone"><button class="insert-block" aria-label="Add a block here">+</button></div>
+          <div class="block" draggable="true">
+            <button class="block-grip" aria-label="Move section block" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button>
+            <h2 contenteditable="true">The document is the product</h2><p contenteditable="true">The page stays rendered while another tool changes the file. Reading position remains stable. <span class="selection">Source appears only for the exact sentence or block you choose to correct.</span></p><div class="update"><i></i><span>Codex updated this section just now</span><button>Undo my edit</button></div>
+          </div>
+          <div class="insertion-zone"><button class="insert-block" aria-label="Add a block here">+</button></div>
+          <figure class="block diagram" draggable="true">
+            <button class="block-grip" aria-label="Move diagram block" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button>
+            <span class="kind">mermaid</span><button id="diagramSource">Edit source</button>
+            <div class="flow"><div class="node primary">External agent</div><span class="arrow">→</span><div class="node">Markdown file</div><span class="arrow">→</span><div class="node">SimpleMark</div></div>
+          </figure>
+          <div class="insertion-zone"><button class="insert-block" aria-label="Add a block here">+</button></div>
+          <div class="block" draggable="true">
+            <button class="block-grip" aria-label="Move explanation block" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button>
+            <p contenteditable="true">Technical material belongs inline on the page. A diagram is a diagram; a table is a table; code is readable. Markdown punctuation is storage syntax, not the reading interface.</p>
+          </div>
+          <div class="insertion-zone"><button class="insert-block" aria-label="Add a block here">+</button></div>
+          <pre class="block code" draggable="true"><button class="block-grip" aria-label="Move code block" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button><span class="comment"># The file remains ordinary Markdown</span>
+<span class="key">status</span>: saved
+<span class="key">source</span>: ~/Documents/system-design.md
+<span class="key">watching</span>: external changes appear quietly</pre>
+          <div class="insertion-zone"><button class="insert-block" aria-label="Add a block here">+</button></div>
+          <div class="block" draggable="true"><button class="block-grip" aria-label="Move closing note" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button><div class="document-rule"></div><p class="quiet-note" contenteditable="true">No workspace, chat rail, file tree, or review dashboard needs to live beside this page.</p></div>
+          <div class="insertion-zone end"><button class="insert-block" aria-label="Add a block at the end">+</button></div>
+        </article>
+
+        <aside class="source-sheet" aria-label="Diagram source editor">
+          <header><span>Mermaid source · drag to move</span><span>resize lower-right</span></header>
+          <textarea aria-label="Mermaid source">flowchart LR
+  Agent[External agent] --> File[Markdown file]
+  File --> App[SimpleMark]</textarea>
+          <div class="sheet-actions"><button id="cancelSource">Cancel</button><button class="done" id="doneSource">Done</button></div>
+        </aside>
+      </section>
+    </main>
+  </div>
+
+  <nav class="preview" aria-label="Wireframe state">
+    <span>Preview</span>
+    <button class="on" data-view="reading">Reading</button>
+    <button data-view="changed">File changed</button>
+    <button data-view="source">Edit one block</button>
+    <span>Theme</span>
+    <button data-theme-preview="white">White</button>
+    <button class="on" data-theme-preview="tan">Tan</button>
+    <button data-theme-preview="night">Night</button>
+  </nav>
+
+  <script>
+    const stateButtons = [...document.querySelectorAll('[data-view]')]
+    const show = state => {
+      document.body.dataset.state = state
+      stateButtons.forEach(button => button.classList.toggle('on', button.dataset.view === state))
+    }
+    stateButtons.forEach(button => button.addEventListener('click', () => show(button.dataset.view)))
+    document.querySelector('#sourceButton').addEventListener('click', () => show('source'))
+    document.querySelector('#diagramSource').addEventListener('click', () => show('source'))
+    document.querySelector('#cancelSource').addEventListener('click', () => show('reading'))
+    document.querySelector('#doneSource').addEventListener('click', () => show('reading'))
+    const readerPreferences = document.querySelector('#readerPreferences')
+    const themeMenu = document.querySelector('#themeMenu')
+    const themeButtons = [...document.querySelectorAll('[data-theme-choice]')]
+    const themePreviewButtons = [...document.querySelectorAll('[data-theme-preview]')]
+    const setTheme = theme => {
+      document.body.dataset.theme = theme
+      themeButtons.forEach(button => button.classList.toggle('on', button.dataset.themeChoice === theme))
+      themePreviewButtons.forEach(button => button.classList.toggle('on', button.dataset.themePreview === theme))
+    }
+    readerPreferences.addEventListener('click', () => {
+      const open = themeMenu.classList.toggle('open')
+      readerPreferences.setAttribute('aria-expanded', String(open))
+    })
+    themeButtons.forEach(button => button.addEventListener('click', () => {
+      setTheme(button.dataset.themeChoice)
+      themeMenu.classList.remove('open')
+      readerPreferences.setAttribute('aria-expanded', 'false')
+    }))
+    themePreviewButtons.forEach(button => button.addEventListener('click', () => setTheme(button.dataset.themePreview)))
+
+    let draggedBlock = null
+    const blockHandleSelector = '.block-grip'
+    const setBlockEvents = block => {
+      block.addEventListener('dragstart', event => {
+        if (!event.target.closest(blockHandleSelector)) { event.preventDefault(); return }
+        draggedBlock = block
+        block.classList.add('dragging')
+        event.dataTransfer.effectAllowed = 'move'
+      })
+      block.addEventListener('dragend', () => {
+        document.querySelectorAll('.block').forEach(item => item.classList.remove('dragging', 'drop-before', 'drop-after'))
+        draggedBlock = null
+      })
+      block.addEventListener('dragover', event => {
+        if (!draggedBlock || draggedBlock === block) return
+        event.preventDefault()
+        const after = event.clientY > block.getBoundingClientRect().top + block.offsetHeight / 2
+        block.classList.toggle('drop-after', after)
+        block.classList.toggle('drop-before', !after)
+      })
+      block.addEventListener('dragleave', () => block.classList.remove('drop-before', 'drop-after'))
+      block.addEventListener('drop', event => {
+        event.preventDefault()
+        if (!draggedBlock || draggedBlock === block) return
+        const after = event.clientY > block.getBoundingClientRect().top + block.offsetHeight / 2
+        if (after) block.after(draggedBlock)
+        else block.before(draggedBlock)
+      })
+    }
+    document.querySelectorAll('.block').forEach(setBlockEvents)
+    const setInsertionZoneEvents = zone => {
+      zone.addEventListener('dragover', event => {
+        if (!draggedBlock) return
+        event.preventDefault()
+        zone.classList.add('drop-target')
+      })
+      zone.addEventListener('dragleave', () => zone.classList.remove('drop-target'))
+      zone.addEventListener('drop', event => {
+        event.preventDefault()
+        if (draggedBlock) zone.insertAdjacentElement('afterend', draggedBlock)
+        zone.classList.remove('drop-target')
+      })
+      zone.querySelector('.insert-block').addEventListener('click', () => {
+      const block = document.createElement('div')
+      block.className = 'block'
+      block.draggable = true
+      block.innerHTML = '<button class="block-grip" aria-label="Move new paragraph" title="Drag to move this block"><svg viewBox="0 0 24 24"><path d="M8 7h.01M8 12h.01M8 17h.01M16 7h.01M16 12h.01M16 17h.01"/></svg></button><p contenteditable="true">Start writing…</p>'
+      if (zone.classList.contains('end')) zone.before(block)
+      else zone.after(block)
+      setBlockEvents(block)
+      const paragraph = block.querySelector('p')
+      paragraph.focus()
+      document.getSelection().selectAllChildren(paragraph)
+      document.getSelection().collapseToEnd()
+      })
+    }
+    document.querySelectorAll('.insertion-zone').forEach(setInsertionZoneEvents)
+
+    const sourceSheet = document.querySelector('.source-sheet')
+    const sourceSheetHeader = sourceSheet.querySelector('header')
+    let sheetDrag = null
+    sourceSheetHeader.addEventListener('pointerdown', event => {
+      const bounds = sourceSheet.getBoundingClientRect()
+      sheetDrag = { pointerId: event.pointerId, offsetX: event.clientX - bounds.left, offsetY: event.clientY - bounds.top }
+      sourceSheetHeader.setPointerCapture(event.pointerId)
+    })
+    sourceSheetHeader.addEventListener('pointermove', event => {
+      if (!sheetDrag || event.pointerId !== sheetDrag.pointerId) return
+      const maxLeft = window.innerWidth - sourceSheet.offsetWidth - 12
+      const maxTop = window.innerHeight - sourceSheet.offsetHeight - 12
+      sourceSheet.style.left = `${Math.max(12, Math.min(maxLeft, event.clientX - sheetDrag.offsetX))}px`
+      sourceSheet.style.top = `${Math.max(12, Math.min(maxTop, event.clientY - sheetDrag.offsetY))}px`
+      sourceSheet.style.right = 'auto'
+    })
+    sourceSheetHeader.addEventListener('pointerup', () => { sheetDrag = null })
+  </script>
+</body>
+</html>

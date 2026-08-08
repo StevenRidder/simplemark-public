@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  The two keys that make SimpleMark's own document directory a real folder
+	  the person owns, rather than a private container they cannot reach.
+
+	  UIFileSharingEnabled publishes it in the Files app. Paired with the iCloud
+	  container below it appears under iCloud Drive; without the entitlement it
+	  still appears under On My iPhone, which is the smaller promise the app
+	  falls back to. LSSupportsOpeningDocumentsInPlace means a note opened from
+	  anywhere else is edited where it lives instead of being copied in — the
+	  same promise the desktop app makes: still your file, ordinary Markdown, at
+	  a location you chose.
+	-->
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
+
+	<!--
+	  Publishing the container's `Documents` to iCloud Drive under a name a
+	  person recognises. Without `IsDocumentScopePublic` the folder syncs but
+	  stays invisible, which would be the worst of both: a promise kept where
+	  nobody can see it.
+
+	  `SupportedFolderLevels: Any` because notes live in folders the person made
+	  and the desktop app already walks them.
+	-->
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.app.simplemark.ios</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerName</key>
+			<string>SimpleMark</string>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>Any</string>
+		</dict>
+	</dict>
+</dict>
+</plist>

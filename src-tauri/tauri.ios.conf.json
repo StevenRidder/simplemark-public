@@ -1,0 +1,18 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "identifier": "app.simplemark.ios",
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "url": "tauri.html",
+        "title": "SimpleMark"
+      }
+    ]
+  },
+  "bundle": {
+    "iOS": {
+      "developmentTeam": "63PAAX9QF2"
+    }
+  }
+}

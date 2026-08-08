@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">SimpleMark Live Layers</title>
+  <desc id="desc">Three translucent blue document layers moving forward with a white Markdown mark.</desc>
+  <defs>
+    <linearGradient id="cyan" x1="190" y1="440" x2="555" y2="790" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#67DCF7"/>
+      <stop offset="1" stop-color="#37B9EA"/>
+    </linearGradient>
+    <linearGradient id="sky" x1="345" y1="310" x2="700" y2="690" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#62B6FF"/>
+      <stop offset="1" stop-color="#357FF3"/>
+    </linearGradient>
+    <linearGradient id="blue" x1="510" y1="190" x2="825" y2="570" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2D67FF"/>
+      <stop offset="1" stop-color="#1548E7"/>
+    </linearGradient>
+    <filter id="layer-shadow" x="-30%" y="-30%" width="170%" height="180%">
+      <feDropShadow dx="0" dy="20" stdDeviation="22" flood-color="#1747A8" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect data-tile-background="#FFFFFF" x="60" y="60" width="904" height="904" rx="206" fill="#FFFFFF"/>
+  <rect x="62" y="62" width="900" height="900" rx="204" fill="none" stroke="#E5E7EB" stroke-width="6"/>
+  <g filter="url(#layer-shadow)">
+    <rect x="510" y="190" width="300" height="390" rx="56" fill="url(#blue)" transform="rotate(12 660 385)"/>
+    <rect x="350" y="310" width="330" height="420" rx="58" fill="url(#sky)" fill-opacity=".9" transform="rotate(12 515 520)"/>
+    <rect x="190" y="430" width="350" height="430" rx="60" fill="url(#cyan)" fill-opacity=".94" transform="rotate(12 365 645)"/>
+  </g>
+  <g data-mark-offset-x="-24" transform="translate(-24 0)" fill="none" stroke="#FFFFFF" stroke-linecap="round" stroke-linejoin="round" stroke-width="34">
+    <path d="M258 727V600l70 77 70-77v127"/>
+    <path d="M478 610v112"/>
+    <path d="m438 686 40 40 40-40"/>
+  </g>
+</svg>
